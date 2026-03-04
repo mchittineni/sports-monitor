@@ -10,6 +10,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      lines: 90,
+      functions: 90,
+      branches: 90,
+      statements: 90,
       exclude: [
         'node_modules/',
         'src/tests/',

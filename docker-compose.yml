@@ -46,7 +46,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       REDIS_URL: redis://redis:6379
       AWS_REGION: ${AWS_REGION:-us-east-1}
-      JWT_SECRET: ${JWT_SECRET:-demo-secret-key-change-in-production}
+      # NOTE: This value is for local development only.
+      # In any shared or production environment, always provide
+      # a long, random JWT_SECRET via real environment variables
+      # or a secrets manager.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me}
       EVENTS_TABLE: SportsEvents
     ports:
       - "3001:3001"

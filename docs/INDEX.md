@@ -333,6 +333,27 @@ npm run test:coverage # Coverage report
 
 ---
 
+## 🔢 Version Matrix (Key Tools & Runtimes)
+
+| Component                    | Version / Constraint                 | Notes                                         |
+|-----------------------------|--------------------------------------|-----------------------------------------------|
+| Node.js (backend/frontend)  | 24.x (LTS)                           | Used in Dockerfiles and CI                    |
+| npm                         | ≥ 9                                  | As per `docs/SETUP.md`                        |
+| Terraform CLI               | 1.14.x (≥ 1.14.0, < 2.0.0)           | See `terraform/main.tf` and CI workflows      |
+| AWS Provider (Terraform)    | `~> 6.0`                             | Defined in `terraform/main.tf`                |
+| PostgreSQL                  | ≥ 14                                 | Local/dev via Docker, prod via RDS            |
+| Redis                       | 7.x                                  | Local/dev via Docker                          |
+| Backend Docker image        | `node:24-alpine`                     | Multi-stage build in `backend/Dockerfile`     |
+| Frontend Docker image       | `node:24-alpine`                     | Multi-stage build in `frontend/Dockerfile`    |
+| `actions/checkout`          | v4                                   | All workflows                                 |
+| `actions/setup-node`        | v4                                   | Node 24 in tests & deploy                     |
+| `hashicorp/setup-terraform` | v3 (Terraform 1.14.6)                | Test + deploy workflows                       |
+| `aws-actions/configure-aws-credentials` | v6                      | OIDC-based AWS auth in CI/CD                  |
+| `docker/setup-buildx-action`| v3                                   | Docker build workflow                         |
+| Vitest                      | 1.x, coverage ≥ 90% (lines/funcs/etc)| Enforced in backend & frontend configs        |
+
+---
+
 ## ✅ Implementation Checklist
 
 - ✅ Data seeding (PostgreSQL + DynamoDB)

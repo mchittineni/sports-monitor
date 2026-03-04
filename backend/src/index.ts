@@ -1,5 +1,7 @@
 import express, { Express } from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import dotenv from 'dotenv'
@@ -16,6 +18,12 @@ import { startDataPipeline } from './services/dataPipeline.js'
 dotenv.config()
 
 const app: Express = express()
+
+// Behind a reverse proxy (API Gateway / ALB) in production we want
+// Express to respect X-Forwarded-* headers for correct IP/origin data.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1)
+}
 const httpServer = createServer(app)
 const io = new SocketIOServer(httpServer, {
   cors: {
@@ -24,10 +32,25 @@ const io = new SocketIOServer(httpServer, {
   }
 })
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000'
-}))
+// Security & middleware
+app.use(helmet())
+
+// Basic rate limiting to protect core APIs from abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false
+})
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000'
+  })
+)
+
+// Apply rate limiting to all API routes
+app.use('/api', apiLimiter)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 

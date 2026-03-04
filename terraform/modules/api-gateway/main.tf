@@ -6,6 +6,12 @@ variable "lambda_invoke_arn" {
   type = string
 }
 
+variable "allowed_origins" {
+  type        = list(string)
+  description = "Allowed CORS origins for the API Gateway"
+  default     = ["*"]
+}
+
 resource "aws_apigatewayv2_api" "main" {
   name          = "sports-monitor-api-${var.environment}"
   protocol_type = "HTTP"
@@ -14,7 +20,7 @@ resource "aws_apigatewayv2_api" "main" {
     allow_credentials = true
     allow_headers     = ["content-type", "authorization"]
     allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    allow_origins     = ["*"]
+    allow_origins     = var.allowed_origins
     max_age           = 300
   }
 }
@@ -25,13 +31,14 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_type       = "AWS_PROXY"
   integration_method     = "POST"
   payload_format_version = "2.0"
-  target                 = var.lambda_invoke_arn
+  uri                    = var.lambda_invoke_arn
 }
 
 resource "aws_apigatewayv2_route" "api_route" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "$default"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_stage" "main" {

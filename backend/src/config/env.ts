@@ -2,10 +2,23 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
+const NODE_ENV = process.env.NODE_ENV || 'development'
+
+// In production we require a strong JWT secret to be provided via env.
+if (NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable must be set in production')
+}
+
 export const env = {
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  NODE_ENV,
   PORT: parseInt(process.env.PORT || '3001'),
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
+
+  // Authentication
+  JWT_SECRET:
+    process.env.JWT_SECRET ||
+    // Safe default for local/dev only – overridden in real environments
+    'dev-only-secret-change-me',
 
   // Database
   DB_HOST: process.env.DB_HOST || 'localhost',

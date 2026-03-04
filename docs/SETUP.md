@@ -26,11 +26,12 @@ Complete setup instructions for running the sports monitoring platform with auth
 
 ## Prerequisites
 
-- **Node.js**: v18.0.0 or higher
+- **Node.js**: v24.0.0 or higher (LTS)
 - **npm**: v9.0.0 or higher
 - **PostgreSQL**: v14.0 or higher (or Docker)
 - **Redis**: v7.0 or higher (or Docker)
 - **Docker & Docker Compose**: Latest version (recommended)
+- **Terraform CLI**: v1.14.0 or higher (for AWS infrastructure)
 - **AWS Account**: For Bedrock AI and CloudWatch (optional for local development)
 
 ---
