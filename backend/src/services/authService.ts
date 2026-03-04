@@ -1,0 +1,165 @@
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
+import { v4 as uuid } from 'uuid'
+import { query } from '../database/connection.js'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-prod'
+const JWT_EXPIRY = '7d'
+const SALT_ROUNDS = 10
+
+export interface AuthTokens {
+  accessToken: string
+  refreshToken: string
+}
+
+export interface TokenPayload {
+  userId: string
+  email: string
+  username: string
+}
+
+// Hash password
+export const hashPassword = async (password: string): Promise<string> => {
+  return bcrypt.hash(password, SALT_ROUNDS)
+}
+
+// Compare password
+export const comparePasswords = async (
+  password: string,
+  hashedPassword: string
+): Promise<boolean> => {
+  return bcrypt.compare(password, hashedPassword)
+}
+
+// Generate JWT tokens
+export const generateTokens = (payload: TokenPayload): AuthTokens => {
+  const accessToken = jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRY,
+    algorithm: 'HS256'
+  })
+
+  const refreshToken = jwt.sign(payload, JWT_SECRET, {
+    expiresIn: '30d',
+    algorithm: 'HS256'
+  })
+
+  return { accessToken, refreshToken }
+}
+
+// Verify token
+export const verifyToken = (token: string): TokenPayload | null => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload
+    return decoded
+  } catch (error) {
+    console.error('Token verification failed:', error)
+    return null
+  }
+}
+
+// Register user
+export const registerUser = async (
+  email: string,
+  username: string,
+  password: string
+): Promise<{ id: string; email: string; username: string }> => {
+  try {
+    // Check if user exists
+    const existingUser = await query(
+      'SELECT id FROM users WHERE email = $1 OR username = $2',
+      [email, username]
+    )
+
+    if (existingUser.length > 0) {
+      throw new Error('User with this email or username already exists')
+    }
+
+    // Hash password
+    const hashedPassword = await hashPassword(password)
+
+    // Create user
+    const userId = uuid()
+    await query(
+      `INSERT INTO users (id, email, username, password_hash, avatar_url, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+      [
+        userId,
+        email,
+        username,
+        hashedPassword,
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+      ]
+    )
+
+    return { id: userId, email, username }
+  } catch (error) {
+    console.error('Registration error:', error)
+    throw error
+  }
+}
+
+// Login user
+export const loginUser = async (
+  email: string,
+  password: string
+): Promise<{ user: any; tokens: AuthTokens }> => {
+  try {
+    const result = await query(
+      'SELECT id, email, username, password_hash FROM users WHERE email = $1',
+      [email]
+    )
+
+    if (result.length === 0) {
+      throw new Error('Invalid email or password')
+    }
+
+    const user = result[0]
+    const passwordMatch = await comparePasswords(password, user.password_hash)
+
+    if (!passwordMatch) {
+      throw new Error('Invalid email or password')
+    }
+
+    const tokens = generateTokens({
+      userId: user.id,
+      email: user.email,
+      username: user.username
+    })
+
+    // Update last login
+    await query('UPDATE users SET updated_at = NOW() WHERE id = $1', [user.id])
+
+    return {
+      user: { id: user.id, email: user.email, username: user.username },
+      tokens
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+    throw error
+  }
+}
+
+// Get user by ID
+export const getUserById = async (userId: string) => {
+  try {
+    const result = await query(
+      'SELECT id, email, username, avatar_url, created_at FROM users WHERE id = $1',
+      [userId]
+    )
+
+    return result.length > 0 ? result[0] : null
+  } catch (error) {
+    console.error('Get user error:', error)
+    throw error
+  }
+}
+
+export default {
+  hashPassword,
+  comparePasswords,
+  generateTokens,
+  verifyToken,
+  registerUser,
+  loginUser,
+  getUserById
+}
