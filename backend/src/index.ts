@@ -35,13 +35,15 @@ const io = new SocketIOServer(httpServer, {
 // Security & middleware
 app.use(helmet())
 
-// Basic rate limiting to protect core APIs from abuse
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false
-})
+// Basic rate limiting to protect core APIs from abuse (disabled in development)
+const apiLimiter = process.env.NODE_ENV === 'development' 
+  ? (req: any, res: any, next: any) => next() // No rate limiting in dev
+  : rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 300,
+      standardHeaders: true,
+      legacyHeaders: false
+    })
 
 app.use(
   cors({
@@ -75,16 +77,38 @@ initializeWebSocket(io)
 // Initialize services
 const initializeServices = async () => {
   try {
-    // Initialize database
-    await initializeDatabaseConnection()
-    console.log('✅ Database connected')
+    if (process.env.NODE_ENV === 'test') {
+      console.log('🧪 Skipping service initialization in test mode')
+      return
+    }
 
-    // Start data pipeline
-    startDataPipeline()
-    console.log('✅ Data pipeline started')
+    // For development without Docker, skip DB initialization
+    if (process.env.SKIP_DB_INIT === 'true' || (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL)) {
+      console.log('⚠️  Development mode: Skipping database and pipeline initialization (using mock data)')
+      return
+    }
+
+    // Initialize database
+    try {
+      await initializeDatabaseConnection()
+      console.log('✅ Database connected')
+
+      // Start data pipeline
+      startDataPipeline()
+      console.log('✅ Data pipeline started')
+    } catch (error) {
+      // In development, warn but don't exit
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️  Database connection failed, using mock data:', error instanceof Error ? error.message : error)
+      } else {
+        throw error
+      }
+    }
   } catch (error) {
     console.error('Failed to initialize services:', error)
-    process.exit(1)
+    if (process.env.NODE_ENV !== 'development') {
+      process.exit(1)
+    }
   }
 }
 
@@ -93,9 +117,12 @@ const PORT = process.env.PORT || 3001
 const startServer = async () => {
   await initializeServices()
 
-  httpServer.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`)
-    console.log(`📡 WebSocket server running on ws://localhost:${PORT}`)
+  return new Promise<typeof httpServer>((resolve) => {
+    const listener = httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`)
+      console.log(`📡 WebSocket server running on ws://localhost:${PORT}`)
+      resolve(listener)
+    })
   })
 }
 
@@ -106,9 +133,15 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error)
-  process.exit(1)
+  if (process.env.NODE_ENV !== 'test') {
+    process.exit(1)
+  }
 })
 
-startServer()
+// Only start when not in test mode; tests can call startServer() directly
+if (process.env.NODE_ENV !== 'test') {
+  startServer()
+}
 
 export default app
+export { httpServer, startServer }

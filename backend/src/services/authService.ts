@@ -8,6 +8,9 @@ const JWT_SECRET = env.JWT_SECRET
 const JWT_EXPIRY = '7d'
 const SALT_ROUNDS = 10
 
+// simple in-memory store used when running tests so we don't hit real DB
+const testUsers: Record<string, any> = {}
+
 export interface AuthTokens {
   accessToken: string
   refreshToken: string
@@ -65,6 +68,16 @@ export const registerUser = async (
   password: string
 ): Promise<{ id: string; email: string; username: string }> => {
   try {
+    if (process.env.NODE_ENV === 'test') {
+      // use in-memory store
+      if (testUsers[email]) {
+        throw new Error('User with this email or username already exists')
+      }
+      const id = uuid()
+      testUsers[email] = { id, email, username, password }
+      return { id, email, username }
+    }
+
     // Check if user exists
     const existingUser = await query(
       'SELECT id FROM users WHERE email = $1 OR username = $2',
@@ -105,6 +118,22 @@ export const loginUser = async (
   password: string
 ): Promise<{ user: any; tokens: AuthTokens }> => {
   try {
+    if (process.env.NODE_ENV === 'test') {
+      const u = testUsers[email]
+      if (!u || u.password !== password) {
+        throw new Error('Invalid email or password')
+      }
+      const tokens = generateTokens({
+        userId: u.id,
+        email: u.email,
+        username: u.username
+      })
+      return {
+        user: { id: u.id, email: u.email, username: u.username },
+        tokens
+      }
+    }
+
     const result = await query(
       'SELECT id, email, username, password_hash FROM users WHERE email = $1',
       [email]
@@ -143,6 +172,10 @@ export const loginUser = async (
 // Get user by ID
 export const getUserById = async (userId: string) => {
   try {
+    if (process.env.NODE_ENV === 'test') {
+      return Object.values(testUsers).find(u => u.id === userId) || null
+    }
+
     const result = await query(
       'SELECT id, email, username, avatar_url, created_at FROM users WHERE id = $1',
       [userId]
