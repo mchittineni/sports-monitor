@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { v4 as uuid } from 'uuid'
 import { query } from '../database/connection.js'
+import { env } from '../config/env.js'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-prod'
+const JWT_SECRET = env.JWT_SECRET
 const JWT_EXPIRY = '7d'
 const SALT_ROUNDS = 10
 

@@ -1,9 +1,9 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.14.0, < 2.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
   }
 
@@ -95,6 +95,10 @@ resource "aws_dynamodb_table" "sports_events" {
     enabled        = true
   }
 
+  point_in_time_recovery {
+    enabled = true
+  }
+
   tags = {
     Name = "SportsEvents"
   }
@@ -104,8 +108,11 @@ resource "aws_dynamodb_table" "sports_events" {
 module "api_gateway" {
   source = "./modules/api-gateway"
 
-  environment = var.environment
+  environment      = var.environment
   lambda_invoke_arn = module.lambda.api_handler_invoke_arn
+  # Override this per environment if you want stricter CORS
+  # (for example, to only allow your production frontend domain).
+  # allowed_origins = ["https://your-frontend.example.com"]
 }
 
 # Lambda Functions
@@ -127,6 +134,7 @@ module "ai_services" {
   source = "./modules/ai-services"
 
   environment      = var.environment
+  vpc_id           = module.networking.vpc_id
   lambda_role_arn  = module.lambda.lambda_role_arn
 }
 

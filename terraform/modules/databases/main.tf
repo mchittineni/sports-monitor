@@ -53,6 +53,7 @@ resource "aws_db_instance" "postgres" {
   allocated_storage     = 20
   storage_type          = "gp3"
   multi_az              = var.multi_az
+  storage_encrypted     = true
   
   db_name  = var.db_name
   username = var.db_username
@@ -67,7 +68,9 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = "sports-monitor-${var.environment}-final-snapshot"
 
-  enable_cloudwatch_logs_exports = ["postgresql"]
+  deletion_protection = var.environment == "prod"
+
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 
   tags = {
     Name = "sports-monitor-db"
