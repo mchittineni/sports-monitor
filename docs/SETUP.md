@@ -1,14 +1,12 @@
 # Sports Monitor - Setup Guide
 
-> **Security reminder:** keep all sensitive values (JWT secrets, database credentials, AWS keys) out of source control. Use an encrypted secrets manager or environment-specific configuration (HashiCorp Vault, AWS Secrets Manager, etc.). Rotate keys regularly, enforce HTTPS/TLS for all endpoints, enable CORS restrictions to allowed domains, and use least‑privilege IAM roles. 
-> 
+> **Security reminder:** keep all sensitive values (JWT secrets, database credentials, AWS keys) out of source control. Use an encrypted secrets manager or environment-specific configuration (HashiCorp Vault, AWS Secrets Manager, etc.). Rotate keys regularly, enforce HTTPS/TLS for all endpoints, enable CORS restrictions to allowed domains, and use least‑privilege IAM roles.
+>
 > - **JWT_SECRET** should be long (≥32 chars) and unique per environment.
 > - **Database passwords** must be strong and rotated periodically.
 > - **AWS credentials** should use IAM roles when running in cloud environments.
 > - Avoid default or demo credentials in production, and disable seeding after initial setup.
 > - Monitor and audit access logs, configure rate-limiting and alerting.
-
-
 
 Complete setup instructions for running the sports monitoring platform with authentication, API documentation, monitoring dashboards, and comprehensive tests.
 
@@ -75,14 +73,16 @@ DB_PASSWORD=postgres
 
 ### 3. Install Dependencies
 
-#### Backend:
+#### Backend
+
 ```bash
 cd backend
 npm install
 cd ..
 ```
 
-#### Frontend:
+#### Frontend
+
 ```bash
 cd frontend
 npm install
@@ -124,6 +124,7 @@ sudo systemctl start postgresql
 ```
 
 Create the database:
+
 ```bash
 psql -U postgres -c "CREATE DATABASE sports_monitor;"
 ```
@@ -171,12 +172,14 @@ npm run db:seed:dynamo # DynamoDB only
 ```
 
 This creates:
+
 - **5 demo users** (with hashed passwords)
 - **14 sports teams** from various countries
 - **5 matches** with live/scheduled/finished statuses
 - **7 live events** in DynamoDB for real-time updates
 
 Demo credentials:
+
 ```
 Email: john_doe@example.com
 Password: SecurePass123!
@@ -216,6 +219,7 @@ npm start
 ```
 
 Expected output:
+
 ```
 ✅ Database connected
 ✅ Data pipeline started
@@ -265,6 +269,7 @@ npm run test:coverage
 ```
 
 **Test files included:**
+
 - `src/tests/auth.test.ts` - Authentication endpoints (9 tests)
 - `src/tests/sports.test.ts` - Sports API endpoints (6 tests)
 - `src/tests/ai.test.ts` - AI features (6 tests)
@@ -286,6 +291,7 @@ npm run test:coverage
 ```
 
 **Test files included:**
+
 - `src/tests/components.test.ts` - Component logic (8 tests)
 - `src/tests/services.test.ts` - Service integration (6 tests)
 
@@ -302,6 +308,7 @@ http://localhost:3001/api-docs
 ```
 
 Features:
+
 - 📖 Complete endpoint documentation
 - 🔑 Bearer token authentication UI
 - 📤 Try API requests directly from the browser
@@ -310,27 +317,32 @@ Features:
 ### Key API Endpoints
 
 #### Authentication
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login and get JWT tokens
 - `GET /api/auth/me` - Get current authenticated user (protected)
 
 #### User Profile
+
 - `GET /api/user/favorites` - List favorite sports (protected)
 - `POST /api/user/favorites/:sport` - Add favorite sport (protected)
 - `DELETE /api/user/favorites/:sport` - Remove favorite (protected)
 - `GET /api/user/watched` - List watched matches (protected)
 
 #### Sports Data
+
 - `GET /api/sports/by-country?country=Brazil` - Get sports by country
 - `GET /api/sports/by-sport?sport=Football` - Get sports by type
 - `GET /api/sports/live` - Get live events (with optional auth)
 
 #### AI Features
+
 - `POST /api/ai/chat` - Chat with AI assistant
 - `POST /api/ai/summarize` - Get AI-generated summaries
 - `POST /api/ai/predict` - Get match predictions
 
 #### Statistics
+
 - `GET /api/stats/overview` - Overview statistics
 - `GET /api/stats/by-country/:country` - Country-specific stats
 
@@ -360,6 +372,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 ```
 
 Response includes JWT tokens:
+
 ```json
 {
   "user": {
@@ -397,6 +410,7 @@ await createMonitoringDashboard('dev')  // or 'staging', 'production'
 ```
 
 **Dashboard includes:**
+
 - Lambda invocations, errors, and performance metrics
 - RDS database CPU, connections, and storage
 - DynamoDB read/write capacity and errors
@@ -559,7 +573,7 @@ npm test -- --reporter=verbose
 
 ## Support & Documentation
 
-- **API Docs**: http://localhost:3001/api-docs (Swagger UI)
+- **API Docs**: <http://localhost:3001/api-docs> (Swagger UI)
 - **Test Coverage**: `npm run test:coverage`
 - **Database Schema**: See `docs/DATABASE_SCHEMA.sql`
 - **Architecture**: See `README.md`

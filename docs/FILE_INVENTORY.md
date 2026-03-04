@@ -161,13 +161,13 @@ project-root/
 
 ### Frontend Files
 
-4. **frontend/package.json**
+1. **frontend/package.json**
    - Added vitest, @vitest/ui for testing
    - Added @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
    - Added jsdom for test environment
    - Updated scripts: test, test:watch, test:ui, test:coverage
 
-5. **docker-compose.yml**
+2. **docker-compose.yml**
    - Added JWT_SECRET environment variable
    - Added migration volume: ./backend/src/database/migrations/001_add_auth.sql
    - Updated postgres service to initialize migrations
@@ -208,6 +208,7 @@ project-root/
 ### Backend Added Dependencies
 
 **Production:**
+
 ```json
 {
   "bcrypt": "^5.1.1",
@@ -219,6 +220,7 @@ project-root/
 ```
 
 **Development:**
+
 ```json
 {
   "@types/bcrypt": "^5.0.2",
@@ -231,6 +233,7 @@ project-root/
 ### Frontend Added Dependencies
 
 **Development:**
+
 ```json
 {
   "@vitest/ui": "^1.0.1",
@@ -328,6 +331,7 @@ sports-monitor/
 ```
 
 ### Legend
+
 - ✨ NEW - Newly created
 - 📝 MODIFIED - Existing file updated
 - 📁 Directory
@@ -340,12 +344,14 @@ sports-monitor/
 ### Running Setup
 
 **Linux/macOS:**
+
 ```bash
 chmod +x setup.sh
 ./setup.sh
 ```
 
 **Windows:**
+
 ```bash
 setup.bat
 ```

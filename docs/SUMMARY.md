@@ -13,32 +13,37 @@
 ## 📦 What Was Delivered
 
 ### ✅ Feature 1: Data Seeding Scripts (3 files)
+
 - PostgreSQL seeding with 5 users, 14 teams, 5 matches, 5+ events, 2 AI summaries
 - DynamoDB live events with TTL and indexing
 - Master orchestrator script
 - **Usage**: `npm run db:seed`
 
 ### ✅ Feature 2: Authentication System (4 files)
+
 - JWT token generation (7-day access, 30-day refresh)
 - bcrypt password hashing with 10-round salt
 - Protected and optional auth middleware
 - Register, login, profile, favorites, history endpoints
-- **Demo**: john_doe@example.com / SecurePass123!
+- **Demo**: <john_doe@example.com> / SecurePass123!
 
 ### ✅ Feature 3: API Documentation (1 file)
+
 - Swagger/OpenAPI 3.0 specification
 - Interactive explorer at `/api-docs`
 - 15+ endpoints with request/response schemas
 - Bearer token authentication UI
-- **Access**: http://localhost:3001/api-docs
+- **Access**: <http://localhost:3001/api-docs>
 
 ### ✅ Feature 4: Monitoring Dashboards (1 file)
+
 - CloudWatch dashboard as-code service
 - 6 metric widget categories: Lambda, RDS, DynamoDB, API Gateway, Logs, Redis
 - Environment-specific configurations
 - **Deploy**: `await createMonitoringDashboard('production')`
 
 ### ✅ Feature 5: Test Suites (7 files, 43 tests)
+
 - Backend integration tests (21): Auth, sports, AI endpoints
 - Backend unit tests (8): Password, JWT operations
 - Frontend component tests (8): UI components, state
@@ -302,6 +307,7 @@
 ## 🚀 Quick Start Options
 
 ### Option 1: Docker (Recommended)
+
 ```bash
 docker-compose up -d
 docker-compose exec backend npm run db:seed
@@ -309,6 +315,7 @@ docker-compose exec backend npm run db:seed
 ```
 
 ### Option 2: Manual Setup
+
 ```bash
 cd backend && npm install && npm run db:seed && npm run dev &
 cd frontend && npm install && npm run dev
@@ -316,6 +323,7 @@ cd frontend && npm install && npm run dev
 ```
 
 ### Option 3: Automated Script
+
 ```bash
 # Linux/macOS
 ./setup.sh
@@ -350,7 +358,7 @@ setup.bat
 5. **Deep Dive**: [IMPLEMENTATION.md](docs/IMPLEMENTATION.md) - Feature details
 6. **File Details**: [FILE_INVENTORY.md](FILE_INVENTORY.md) - Code organization
 7. **Progress Check**: [CHECKLIST.md](CHECKLIST.md) - Status tracking
-8. **API Docs**: http://localhost:3001/api-docs - Interactive (when running)
+8. **API Docs**: <http://localhost:3001/api-docs> - Interactive (when running)
 
 ---
 
@@ -366,19 +374,21 @@ Email: jane_smith@example.com
 Password: SecurePass123!
 ```
 
-Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
+Try in Swagger UI: <http://localhost:3001/api-docs> → POST /auth/login
 
 ---
 
 ## 🔧 Key npm Commands
 
 ### Backend
+
 - `npm run dev` - Development with hot-reload
 - `npm test` - Run 17 backend tests
 - `npm run db:seed` - Populate demo data
 - `npm run test:coverage` - Test coverage report
 
 ### Frontend
+
 - `npm run dev` - Development server
 - `npm test` - Run 26 frontend tests
 - `npm run test:ui` - Interactive test UI
@@ -399,6 +409,7 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 | Testing | ✅ | 7 | 43 | 540 |
 
 ### Code Quality: ✅ READY FOR PRODUCTION
+
 - Full TypeScript type safety
 - Comprehensive error handling
 - Security best practices implemented
@@ -406,6 +417,7 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 - Documentation complete
 
 ### Deployment Readiness: ✅ READY
+
 - Docker configuration complete
 - Environment variables documented
 - Database migrations prepared
@@ -426,7 +438,7 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 
 3. **Verify Everything**
    - Run tests: `npm test`
-   - Visit API docs: http://localhost:3001/api-docs
+   - Visit API docs: <http://localhost:3001/api-docs>
    - Test authentication with demo credentials
 
 4. **Deploy or Customize**
@@ -449,7 +461,7 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 
 1. **Setup Issues**: See [SETUP.md](docs/SETUP.md) → Troubleshooting
 2. **Feature Questions**: See [IMPLEMENTATION.md](docs/IMPLEMENTATION.md)
-3. **API Help**: Visit http://localhost:3001/api-docs
+3. **API Help**: Visit <http://localhost:3001/api-docs>
 4. **Find Files**: See [FILE_INVENTORY.md](FILE_INVENTORY.md)
 5. **Track Progress**: See [CHECKLIST.md](CHECKLIST.md)
 
@@ -469,7 +481,8 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 
 **Everything is complete, tested, documented, and ready to use!**
 
-### ✨ What You Have:
+### ✨ What You Have
+
 - Complete authentication system (JWT + bcrypt)
 - 28+ database records (ready to seed)
 - 15+ documented API endpoints
@@ -479,14 +492,17 @@ Try in Swagger UI: http://localhost:3001/api-docs → POST /auth/login
 - Complete deployment guide
 - Automated setup scripts
 
-### 🚀 Get Started:
+### 🚀 Get Started
+
 1. Read [INDEX.md](docs/INDEX.md)
 2. Run setup script or `docker-compose up -d`
-3. Visit http://localhost:3000
-4. Try API at http://localhost:3001/api-docs
+3. Visit <http://localhost:3000>
+4. Try API at <http://localhost:3001/api-docs>
 
-### 📖 Documentation:
+### 📖 Documentation
+
 All files are in the repository root:
+
 - `.env.example` - Configuration template
 - `SETUP.md` - Complete guide (400+ lines)
 - `docs/IMPLEMENTATION.md` - Feature details

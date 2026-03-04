@@ -2,12 +2,12 @@
 
 > **Security note:** This project follows best practices for sensitive data. Never commit `.env` files or secrets. Always keep `JWT_SECRET`, database passwords, and AWS credentials in a secure vault or environment manager. Rotate keys regularly and use HTTPS in production.
 
-
 This document summarizes all implementations from the previous session, including authentication, data seeding, API documentation, monitoring, and testing.
 
 ## 📋 Implementation Summary
 
 ### Phase 1: Data Seeding ✅
+
 Comprehensive demo data scripts for both PostgreSQL and DynamoDB.
 
 | File | Lines | Purpose | Status |
@@ -17,6 +17,7 @@ Comprehensive demo data scripts for both PostgreSQL and DynamoDB.
 | `backend/data/scripts/seed.ts` | 29 | Master orchestrator for both seeders | ✅ Ready |
 
 **Demo Data Included:**
+
 - 5 demo users (with hashed passwords via bcrypt)
 - 14 sports teams from various countries (India, Brazil, USA, etc.)
 - 5 matches (live/scheduled/finished)
@@ -25,6 +26,7 @@ Comprehensive demo data scripts for both PostgreSQL and DynamoDB.
 - 7 live DynamoDB events with country/sport indexing
 
 **Usage:**
+
 ```bash
 npm run db:seed          # Run all seeders
 npm run db:seed:pg       # PostgreSQL only
@@ -34,6 +36,7 @@ npm run db:seed:dynamo   # DynamoDB only
 ---
 
 ### Phase 2: Authentication System ✅
+
 Complete JWT-based authentication with bcrypt password hashing and protected routes.
 
 | File | Lines | Purpose | Status |
@@ -44,6 +47,7 @@ Complete JWT-based authentication with bcrypt password hashing and protected rou
 | `backend/src/api/routes/user.ts` | 105 | User preferences endpoints | ✅ Ready |
 
 **Authentication Features:**
+
 - Registration with email/username validation
 - Login with JWT tokens (access + refresh)
 - Protected user profile endpoint
@@ -52,6 +56,7 @@ Complete JWT-based authentication with bcrypt password hashing and protected rou
 - Bearer token middleware with optional auth support
 
 **Services Exported:**
+
 ```typescript
 - hashPassword(password: string): Promise<string>
 - comparePasswords(password: string, hashedPassword: string): Promise<boolean>
@@ -63,12 +68,14 @@ Complete JWT-based authentication with bcrypt password hashing and protected rou
 ```
 
 **Key Configuration:**
+
 - Algorithm: HS256
 - Access Token: 7 days
 - Refresh Token: 30 days
 - Password Hashing: bcrypt with 10-round salt
 
 **Usage:**
+
 ```bash
 # Register
 curl -X POST http://localhost:3001/api/auth/register \
@@ -88,6 +95,7 @@ curl -X GET http://localhost:3001/api/user/favorites \
 ---
 
 ### Phase 3: API Documentation ✅
+
 Interactive Swagger/OpenAPI 3.0 specification with full endpoint documentation.
 
 | File | Lines | Purpose | Status |
@@ -95,6 +103,7 @@ Interactive Swagger/OpenAPI 3.0 specification with full endpoint documentation.
 | `backend/src/config/swagger.ts` | 218 | OpenAPI 3.0 spec + Swagger UI setup | ✅ Ready |
 
 **Documentation Features:**
+
 - All 15+ endpoints documented
 - Request/response schemas for all operations
 - Bearer token authentication UI
@@ -103,6 +112,7 @@ Interactive Swagger/OpenAPI 3.0 specification with full endpoint documentation.
 - Security schemes documented
 
 **Schemas Defined:**
+
 1. User (id, email, username, avatar_url, created_at)
 2. Match (id, sport, teams, time, status, scores, country_code)
 3. AuthResponse (user + tokens)
@@ -110,6 +120,7 @@ Interactive Swagger/OpenAPI 3.0 specification with full endpoint documentation.
 5. Implicit schemas for all other endpoint types
 
 **Access:**
+
 ```
 http://localhost:3001/api-docs
 ```
@@ -117,6 +128,7 @@ http://localhost:3001/api-docs
 ---
 
 ### Phase 4: Monitoring & Dashboards ✅
+
 CloudWatch dashboard service for production monitoring with automated metrics.
 
 | File | Lines | Purpose | Status |
@@ -144,6 +156,7 @@ CloudWatch dashboard service for production monitoring with automated metrics.
    - CPU Utilization, Network I/O, Engine CPU
 
 **Usage:**
+
 ```bash
 # Deploy dashboard to AWS
 import { createMonitoringDashboard } from './services/dashboardService.js'
@@ -154,6 +167,7 @@ await createMonitoringDashboard('dev')  // or 'staging', 'production'
 ---
 
 ### Phase 5: Test Suites ✅
+
 Comprehensive test coverage with Vitest for backend integration, unit, and frontend component tests.
 
 | File | Lines | Tests | Status |
@@ -168,6 +182,7 @@ Comprehensive test coverage with Vitest for backend integration, unit, and front
 **Total Test Coverage: 43 tests**
 
 **Backend Integration Tests:**
+
 - Registration endpoint validation
 - Login and token generation
 - Protected route authentication
@@ -179,6 +194,7 @@ Comprehensive test coverage with Vitest for backend integration, unit, and front
 - Match predictions
 
 **Backend Unit Tests:**
+
 - Password hashing (bcrypt)
 - Password comparison
 - JWT token generation
@@ -187,6 +203,7 @@ Comprehensive test coverage with Vitest for backend integration, unit, and front
 - Payload extraction
 
 **Frontend Tests:**
+
 - MapComponent location rendering
 - MatchCard display logic
 - ChatAssistant message handling
@@ -195,6 +212,7 @@ Comprehensive test coverage with Vitest for backend integration, unit, and front
 - WebSocket connection state
 
 **Running Tests:**
+
 ```bash
 # Backend
 npm test              # Run all tests
@@ -311,14 +329,14 @@ Email: jane_smith@example.com
 Password: SecurePass123!
 ```
 
-Try logging in at: http://localhost:3001/api-docs → POST /auth/login
+Try logging in at: <http://localhost:3001/api-docs> → POST /auth/login
 
 ---
 
 ## 📖 Documentation
 
 - **Setup Guide**: [SETUP.md](docs/SETUP.md) - Complete installation and configuration
-- **API Documentation**: http://localhost:3001/api-docs - Interactive Swagger UI
+- **API Documentation**: <http://localhost:3001/api-docs> - Interactive Swagger UI
 - **Database Schema**: docs/DATABASE_SCHEMA.sql - Full schema definition
 - **README**: README.md - Project overview and architecture
 
@@ -327,6 +345,7 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 ## ✨ Key Features Implemented
 
 ### Authentication
+
 - ✅ User registration with validation
 - ✅ Secure password hashing (bcrypt)
 - ✅ JWT token generation and verification
@@ -335,12 +354,14 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 - ✅ User profile and preferences management
 
 ### Data Management
+
 - ✅ PostgreSQL seeding (users, teams, matches, events, summaries)
 - ✅ DynamoDB seeding (live events with TTL)
 - ✅ Database migrations for authentication schema
 - ✅ Indexes for optimal query performance
 
 ### API & Documentation
+
 - ✅ Active authentication endpoints (register/login)
 - ✅ User management endpoints (favorites, history)
 - ✅ Interactive Swagger UI with security schemes
@@ -348,12 +369,14 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 - ✅ Schema documentation for all endpoints
 
 ### Monitoring
+
 - ✅ CloudWatch dashboard service
 - ✅ Metrics for Lambda, RDS, DynamoDB, API Gateway
 - ✅ Log insights and analysis
 - ✅ Cache/Redis monitoring
 
 ### Testing
+
 - ✅ Authentication integration tests (9 tests)
 - ✅ Sports API integration tests (6 tests)
 - ✅ AI features integration tests (6 tests)
@@ -367,6 +390,7 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 ## 📊 Technology Stack
 
 ### Backend
+
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express.js
 - **Authentication**: JWT (jsonwebtoken) + bcrypt
@@ -375,6 +399,7 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 - **API Docs**: Swagger/OpenAPI 3.0
 
 ### Frontend
+
 - **Framework**: React 18 + TypeScript
 - **Build**: Vite
 - **Testing**: Vitest + React Testing Library
@@ -382,6 +407,7 @@ Try logging in at: http://localhost:3001/api-docs → POST /auth/login
 - **Maps**: Leaflet + React-Leaflet
 
 ### Infrastructure
+
 - **Containerization**: Docker + Docker Compose
 - **Monitoring**: AWS CloudWatch
 - **AI**: AWS Bedrock
@@ -430,6 +456,7 @@ See [.env.example](.env.example) for complete list.
 - ✅ Database migrations for schema changes
 
 **Production Recommendations:**
+
 - [ ] Use environment-specific JWT secrets
 - [ ] Enable HTTPS/TLS
 - [ ] Configure rate limiting
@@ -444,7 +471,7 @@ See [.env.example](.env.example) for complete list.
 1. **Copy `.env.example` to `.env`** and update with your configuration
 2. **Start services** using Docker Compose OR manual setup
 3. **Run database seeding** to populate demo data
-4. **Access API docs** at http://localhost:3001/api-docs
+4. **Access API docs** at <http://localhost:3001/api-docs>
 5. **Login** with demo credentials
 6. **Run tests** to verify everything works
 7. **Deploy** to production following SETUP.md guidelines
@@ -454,12 +481,14 @@ See [.env.example](.env.example) for complete list.
 ## 🆘 Troubleshooting
 
 **Q: Port 3001 already in use?**
+
 ```bash
 lsof -i :3001
 kill -9 <PID>
 ```
 
 **Q: Database connection failed?**
+
 ```bash
 # Check PostgreSQL is running
 psql -U postgres -c "SELECT 1"
@@ -468,12 +497,14 @@ npm run db:migrate
 ```
 
 **Q: Tests fail?**
+
 ```bash
 rm -rf node_modules && npm install
 npm run test:coverage
 ```
 
 **Q: JWT authentication not working?**
+
 - Verify `JWT_SECRET` in `.env`
 - Check Bearer token format: `Authorization: Bearer <token>`
 - Ensure token hasn't expired
@@ -484,7 +515,7 @@ See [SETUP.md](docs/SETUP.md) for complete troubleshooting guide.
 
 ## 📞 Support
 
-- **API Documentation**: http://localhost:3001/api-docs
+- **API Documentation**: <http://localhost:3001/api-docs>
 - **Setup Guide**: [SETUP.md](docs/SETUP.md)
 - **Test Coverage**: Run `npm run test:coverage`
 - **GitHub Issues**: Create an issue in the repository
