@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  z-index: 1;
+}
+
+.sports-card {
+  @apply bg-secondary rounded-lg p-4 text-white shadow-lg;
+}
+
+.match-highlight {
+  @apply bg-accent bg-opacity-10 border-l-4 border-accent pl-4 py-2;
+}
