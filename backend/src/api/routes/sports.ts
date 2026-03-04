@@ -34,8 +34,17 @@ router.get('/live', async (req: Request, res: Response) => {
 router.get('/by-sport/:sport', async (req: Request, res: Response) => {
   try {
     const { sport } = req.params
-    // TODO: Implement sport filtering
-    res.status(200).json({ placeholder: `Events for ${sport}` })
+    if (!sport) {
+      return res.status(400).json({ error: 'Sport parameter required' })
+    }
+
+    // For now just return any live events that match the sport string
+    const events = await getLiveEvents()
+    const filtered = events.filter((e: any) => 
+      typeof e.sport === 'string' && e.sport.toLowerCase() === sport.toLowerCase()
+    )
+
+    res.status(200).json(filtered)
   } catch (error) {
     console.error('Error:', error)
     res.status(500).json({ error: 'Internal server error' })

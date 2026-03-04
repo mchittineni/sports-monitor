@@ -1,18 +1,18 @@
 import { test, expect, describe } from 'vitest'
-import axios from 'axios'
+import { api } from './setup'
 
-const API_URL = 'http://localhost:3001/api'
+// use shared api helper
 
 describe('Sports API', () => {
   describe('GET /sports/live', () => {
     test('should return live events', async () => {
-      const response = await axios.get(`${API_URL}/sports/live`)
+      const response = await api().get('/api/sports/live')
 
       expect(response.status).toBe(200)
-      expect(Array.isArray(response.data)).toBe(true)
-      
-      if (response.data.length > 0) {
-        const event = response.data[0]
+      expect(Array.isArray(response.body)).toBe(true)
+
+      if (response.body.length > 0) {
+        const event = response.body[0]
         expect(event).toHaveProperty('sport')
         expect(event).toHaveProperty('homeTeam')
         expect(event).toHaveProperty('awayTeam')
@@ -23,47 +23,43 @@ describe('Sports API', () => {
 
   describe('GET /sports/by-country', () => {
     test('should return events for a specific country', async () => {
-      const response = await axios.get(`${API_URL}/sports/by-country`, {
-        params: { country: 'Brazil' }
-      })
+      const response = await api()
+        .get('/api/sports/by-country')
+        .query({ country: 'Brazil' })
 
       expect(response.status).toBe(200)
-      expect(Array.isArray(response.data)).toBe(true)
+      expect(Array.isArray(response.body)).toBe(true)
 
-      if (response.data.length > 0) {
-        response.data.forEach((event: any) => {
+      if (response.body.length > 0) {
+        response.body.forEach((event: any) => {
           expect(event.country).toMatch(/Brazil|BR/)
         })
       }
     })
 
     test('should return 400 without country parameter', async () => {
-      try {
-        await axios.get(`${API_URL}/sports/by-country`)
-        expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.response.status).toBe(400)
-      }
+      const response = await api().get('/api/sports/by-country')
+      expect(response.status).toBe(400)
     })
   })
 
   describe('GET /sports/by-sport/:sport', () => {
     test('should return events for a specific sport', async () => {
-      const response = await axios.get(`${API_URL}/sports/by-sport/Football`)
+      const response = await api().get('/api/sports/by-sport/Football')
 
       expect(response.status).toBe(200)
-      expect(Array.isArray(response.data)).toBe(true)
+      expect(Array.isArray(response.body)).toBe(true)
     })
   })
 })
 
 describe('Health Check', () => {
   test('should return health status', async () => {
-    const response = await axios.get('http://localhost:3001/health')
+      const response = await api().get('/health')
 
-    expect(response.status).toBe(200)
-    expect(response.data).toHaveProperty('status')
-    expect(response.data.status).toBe('ok')
-    expect(response.data).toHaveProperty('timestamp')
+      expect(response.status).toBe(200)
+      expect(response.body).toHaveProperty('status')
+      expect(response.body.status).toBe('ok')
+      expect(response.body).toHaveProperty('timestamp')
   })
 })
