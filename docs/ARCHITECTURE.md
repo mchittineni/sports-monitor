@@ -67,6 +67,7 @@ Monitoring & Logging:
 ## Data Flow
 
 ### 1. Real-time Sports Data Pipeline
+
 ```
 External APIs (ESPN, TheSportsDB)
          ↓
@@ -80,6 +81,7 @@ External APIs (ESPN, TheSportsDB)
 ```
 
 ### 2. User Interaction Flow
+
 ```
 User clicks country on map
          ↓
@@ -97,6 +99,7 @@ User clicks country on map
 ```
 
 ### 3. AI Processing Pipeline
+
 ```
 User message or match data
          ↓
@@ -116,6 +119,7 @@ User message or match data
 ## Deployment Architecture
 
 ### Development Environment
+
 ```
 GitHub (main branch)
     ↓
@@ -137,6 +141,7 @@ GitHub Actions
 ```
 
 ### Staging → Production
+
 - Separate Terraform workspaces
 - Blue-green deployments
 - Canary releases
@@ -175,16 +180,19 @@ GitHub Actions
 ## Scaling Strategy
 
 ### Horizontal Scaling
+
 - **API Gateway**: Auto-scales with traffic (managed)
 - **Lambda**: Concurrent execution limits (configurable)
 - **DynamoDB**: On-demand pricing (auto-scales)
 - **PostgreSQL RDS**: Read replicas for analytics
 
 ### Vertical Scaling
+
 - Lambda memory: 128MB → 10GB (improves CPU)
 - RDS instance: t3.micro → t3.medium → r6i instance family
 
 ### Database Optimization
+
 - PostgreSQL: Connection pooling, indexing, query optimization
 - DynamoDB: GSI for frequent queries, TTL for cleanup
 - Redis: Eviction policies, replication
