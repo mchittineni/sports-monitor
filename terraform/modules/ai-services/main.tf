@@ -10,10 +10,6 @@ variable "lambda_role_arn" {
   type = string
 }
 
-variable "environment" {
-  type = string
-}
-
 # IAM Policy for Bedrock access
 resource "aws_iam_role_policy" "bedrock_policy" {
   name = "bedrock-policy-${var.environment}"

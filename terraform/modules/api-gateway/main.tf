@@ -6,6 +6,7 @@ variable "environment" {
 resource "aws_kms_key" "logs" {
   description             = "KMS key for CloudWatch logs encryption"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
 }
 
 resource "aws_kms_alias" "logs" {

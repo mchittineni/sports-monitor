@@ -6,6 +6,7 @@ variable "vpc_cidr" {
 resource "aws_kms_key" "vpc_flow_logs" {
   description             = "KMS key for VPC flow logs encryption"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
 }
 
 resource "aws_kms_alias" "vpc_flow_logs" {
