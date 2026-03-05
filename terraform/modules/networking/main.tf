@@ -1,5 +1,6 @@
 variable "vpc_cidr" {
-  type = string
+  type        = string
+  description = "The IPv4 CIDR block for the entire Virtual Private Cloud (VPC)."
 }
 
 # KMS Key for VPC flow logs
@@ -15,11 +16,13 @@ resource "aws_kms_alias" "vpc_flow_logs" {
 }
 
 variable "availability_zones" {
-  type = list(string)
+  type        = list(string)
+  description = "A list of AWS Availability Zones used to span public and private subnets."
 }
 
 variable "environment" {
-  type = string
+  type        = string
+  description = "Deployment environment identifier for resource tagging."
 }
 
 # VPC
@@ -141,13 +144,16 @@ resource "aws_route_table_association" "public" {
 }
 
 output "vpc_id" {
-  value = aws_vpc.main.id
+  value       = aws_vpc.main.id
+  description = "The ID of the newly provisioned VPC."
 }
 
 output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
+  value       = aws_subnet.public[*].id
+  description = "List of IDs representing the provisioned public subnets."
 }
 
 output "private_subnet_ids" {
-  value = aws_subnet.private[*].id
+  value       = aws_subnet.private[*].id
+  description = "List of IDs representing the provisioned private subnets."
 }

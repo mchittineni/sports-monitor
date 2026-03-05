@@ -61,12 +61,19 @@ If you need to define a new architectural component (e.g., an SQS Queue for back
 
 4. **Verify Your Syntax**:
    Before committing, initialize the dependencies and format your files.
+
    ```bash
    cd terraform/
    terraform init
    terraform fmt -recursive
    terraform validate
    ```
+
+5. **Write Terraform Tests**:
+   All modules MUST be covered by both Jest Integration Tests and Native Terraform Tests. If tests are omitted, the continuous integration pipelines will fail.
+   - Run Native Tests: `terraform test`
+   - Run Integration Tests (from `terraform/test`): `npm run test`
+   - Test Coverage Script: `npm run test:coverage` (validates 100% module `.tftest.hcl` coverage mapping)
 
 ### Security Considerations for New Modules
 

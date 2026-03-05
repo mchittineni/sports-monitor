@@ -1,13 +1,16 @@
 variable "environment" {
-  type = string
+  type        = string
+  description = "The deployment environment name."
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
+  description = "VPC boundary ID for network-constrained resources."
 }
 
 variable "lambda_role_arn" {
-  type = string
+  type        = string
+  description = "The IAM role ARN of the Lambda function that requires access to AWS Bedrock AI models."
 }
 
 # IAM Policy for Bedrock access
@@ -32,5 +35,6 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 
 # SageMaker endpoint for predictions (optional)
 output "bedrock_enabled" {
-  value = true
+  value       = true
+  description = "Indicator that AWS Bedrock AI services are provisioned and accessible."
 }

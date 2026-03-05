@@ -1,9 +1,11 @@
 variable "environment" {
-  type = string
+  type        = string
+  description = "Execution environment name used for resource naming (e.g., dev, prod)."
 }
 
 variable "frontend_bucket_name" {
-  type = string
+  type        = string
+  description = "The exact, globally unique name for the S3 bucket hosting the static frontend assets."
 }
 
 # KMS Key for S3 encryption
@@ -161,5 +163,6 @@ resource "aws_cloudfront_distribution" "frontend" {
 }
 
 output "cloudfront_domain_name" {
-  value = aws_cloudfront_distribution.frontend.domain_name
+  value       = aws_cloudfront_distribution.frontend.domain_name
+  description = "The generated CloudFront distribution domain name pointing to the frontend."
 }

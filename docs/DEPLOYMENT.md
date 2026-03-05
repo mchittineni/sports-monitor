@@ -49,7 +49,7 @@ For remote environments (dev, staging, prod), we use **GitHub Actions** located 
 #### A. Tests & Lint (`test.yml`)
 
 - **Trigger**: Pushes and PRs to `main` or `develop`.
-- **Purpose**: Runs `npm test` and `npm run lint` for frontend and backend. It also runs a `tfsec` security scan and `terraform validate` to ensure infrastructure code is safe and syntactically correct.
+- **Purpose**: Runs `npm test`, `npm run build`, and `npm run lint` for frontend and backend codebases. It also executes the infrastructure checks: running both Jest Integration tests and Native Terraform Tests (`terraform test`), performing a `tfsec` security scan, and executing `terraform validate` to ensure infrastructure code is safe and syntactically correct.
 
 #### B. Build & Push (`build.yml`)
 

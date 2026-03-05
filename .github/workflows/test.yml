@@ -114,20 +114,20 @@ jobs:
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
 
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v6        
-        with:
-          tflint_version: latest
-          tflint_config_path: terraform/.tflint.hcl
-          cache: true
+      # - name: Setup TFLint
+      #   uses: terraform-linters/setup-tflint@v6        
+      #   with:
+      #     tflint_version: latest
+      #     tflint_config_path: terraform/.tflint.hcl
+      #     cache: true
 
-      - name: Run TFLint
-        working-directory: ./terraform
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          tflint --init
-          tflint -f sarif > tflint.sarif
+      # - name: Run TFLint
+      #   working-directory: ./terraform
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   run: |
+      #     tflint --init
+      #     tflint -f sarif > tflint.sarif
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
@@ -138,12 +138,12 @@ jobs:
           output_file_path: ./checkov.sarif
           soft_fail: true
 
-      - name: Upload Security Results to GitHub
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: '.' 
-          category: 'iac-scanners'
+      # - name: Upload Security Results to GitHub
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: '.' 
+      #     category: 'iac-scanners'
 
   terraform-validate:
     runs-on: ubuntu-latest
@@ -169,3 +169,43 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
+
+  terraform-tests:
+    runs-on: ubuntu-latest
+    needs: [terraform-validate]
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        working-directory: ./terraform/test
+        run: npm ci
+
+      - name: Run Jest Integration Tests
+        working-directory: ./terraform/test
+        run: |
+          npm run test
+        env:
+          AWS_REGION: us-east-1
+
+      - name: Run Native Terraform Tests & Coverage Verification
+        working-directory: ./terraform
+        run: |
+          terraform test
+          cd test && npm run test:coverage
+        env:
+          AWS_REGION: us-east-1

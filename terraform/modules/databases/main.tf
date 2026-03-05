@@ -1,27 +1,33 @@
 variable "vpc_id" {
-  type = string
+  type        = string
+  description = "The ID of the VPC where the RDS instance will be deployed."
 }
 
 variable "environment" {
-  type = string
+  type        = string
+  description = "Deployment environment name, used to prefix and tag resources appropriately."
 }
 
 variable "db_name" {
-  type = string
+  type        = string
+  description = "The initial name of the PostgreSQL database created within the RDS instance."
 }
 
 variable "db_username" {
-  type = string
+  type        = string
+  description = "The master username for accessing the PostgreSQL database."
 }
 
 variable "db_password" {
-  type      = string
-  sensitive = true
+  type        = string
+  sensitive   = true
+  description = "The master password for the PostgreSQL instance. Marked sensitive to avoid logging."
 }
 
 variable "multi_az" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = "Specifies if the RDS instance is Multi-AZ (highly available). Typically true in production."
 }
 
 # KMS Key for RDS encryption
@@ -95,9 +101,11 @@ resource "aws_db_instance" "postgres" {
 }
 
 output "db_endpoint" {
-  value = aws_db_instance.postgres.endpoint
+  value       = aws_db_instance.postgres.endpoint
+  description = "The database connection endpoint (hostname and port) for the RDS instance."
 }
 
 output "db_host" {
-  value = split(":", aws_db_instance.postgres.endpoint)[0]
+  value       = split(":", aws_db_instance.postgres.endpoint)[0]
+  description = "The hostname of the RDS instance, extracted from the full endpoint string."
 }

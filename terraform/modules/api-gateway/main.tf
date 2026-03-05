@@ -1,5 +1,6 @@
 variable "environment" {
-  type = string
+  type        = string
+  description = "The deployment environment (e.g., dev, staging, prod) used for naming and tagging resources."
 }
 
 # KMS Key for CloudWatch logs
@@ -15,7 +16,8 @@ resource "aws_kms_alias" "logs" {
 }
 
 variable "lambda_invoke_arn" {
-  type = string
+  type        = string
+  description = "The Amazon Resource Name (ARN) invoking the primary backend Lambda function."
 }
 
 variable "allowed_origins" {
@@ -115,5 +117,6 @@ resource "aws_apigatewayv2_stage" "main" {
 }
 
 output "api_endpoint" {
-  value = aws_apigatewayv2_stage.main.invoke_url
+  value       = aws_apigatewayv2_stage.main.invoke_url
+  description = "The fully qualified URL endpoint for the deployed API Gateway."
 }
