@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express';
 
 export const errorHandler = (
   err: Error,
@@ -6,14 +6,17 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Unhandled error:', err)
+  console.error('Unhandled error:', err);
 
   if (res.headersSent) {
-    return next(err)
+    return next(err);
   }
 
   res.status(500).json({
     error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
-  })
-}
+    message:
+      process.env.NODE_ENV === 'development'
+        ? err.message
+        : 'An unexpected error occurred',
+  });
+};

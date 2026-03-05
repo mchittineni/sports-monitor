@@ -7,7 +7,7 @@ describe('Error Handler Middleware', () => {
     const req = {} as any;
     const res = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn()
+      json: vi.fn(),
     } as any;
     const next = vi.fn();
 
@@ -18,10 +18,12 @@ describe('Error Handler Middleware', () => {
     errorHandler(err, req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      error: 'Internal Server Error',
-      message: 'Test error'
-    }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Internal Server Error',
+        message: 'Test error',
+      })
+    );
 
     process.env.NODE_ENV = originalEnv;
   });
@@ -32,7 +34,7 @@ describe('Error Handler Middleware', () => {
     const res = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
-      headersSent: false
+      headersSent: false,
     } as any;
     const next = vi.fn();
 
@@ -44,7 +46,7 @@ describe('Error Handler Middleware', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
       error: 'Internal Server Error',
-      message: 'An unexpected error occurred'
+      message: 'An unexpected error occurred',
     });
 
     process.env.NODE_ENV = originalEnv;

@@ -1,12 +1,12 @@
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
-const NODE_ENV = process.env.NODE_ENV || 'development'
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // In production we require a strong JWT secret to be provided via env.
 if (NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable must be set in production')
+  throw new Error('JWT_SECRET environment variable must be set in production');
 }
 
 export const env = {
@@ -40,7 +40,7 @@ export const env = {
 
   // External APIs
   SPORTS_API_KEY: process.env.SPORTS_API_KEY,
-  RAPID_API_KEY: process.env.RAPID_API_KEY
-}
+  RAPID_API_KEY: process.env.RAPID_API_KEY,
+};
 
-export default env
+export default env;

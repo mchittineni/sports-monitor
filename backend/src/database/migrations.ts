@@ -1,4 +1,6 @@
-export const createTables = async (query: Function) => {
+export const createTables = async (
+  query: (sql: string, params?: any[]) => Promise<any>
+) => {
   try {
     // Users table
     await query(`
@@ -8,7 +10,7 @@ export const createTables = async (query: Function) => {
         username VARCHAR(100) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `)
+    `);
 
     // Favorite sports table
     await query(`
@@ -19,7 +21,7 @@ export const createTables = async (query: Function) => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, sport_name)
       )
-    `)
+    `);
 
     // Watched matches table
     await query(`
@@ -29,13 +31,13 @@ export const createTables = async (query: Function) => {
         match_id VARCHAR(255) NOT NULL,
         watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `)
+    `);
 
-    console.log('✅ Database tables created')
+    console.log('✅ Database tables created');
   } catch (error) {
-    console.error('Error creating tables:', error)
-    throw error
+    console.error('Error creating tables:', error);
+    throw error;
   }
-}
+};
 
-export default { createTables }
+export default { createTables };

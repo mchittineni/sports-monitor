@@ -1,9 +1,9 @@
-import { afterEach } from 'vitest'
-import { cleanup } from '@testing-library/react'
+import { afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -16,6 +16,6 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: () => {},
     addEventListener: () => {},
     removeEventListener: () => {},
-    dispatchEvent: () => {}
-  })
-})
+    dispatchEvent: () => {},
+  }),
+});

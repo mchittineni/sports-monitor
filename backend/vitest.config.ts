@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -13,13 +13,9 @@ export default defineConfig({
       functions: 90,
       branches: 90,
       statements: 90,
-      exclude: [
-        'node_modules/',
-        'dist/',
-        'src/tests/',
-      ]
+      exclude: ['node_modules/', 'dist/', 'src/tests/'],
     },
     testTimeout: 10000,
-    hookTimeout: 10000
-  }
-})
+    hookTimeout: 10000,
+  },
+});

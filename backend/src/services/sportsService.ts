@@ -7,7 +7,7 @@ const mockEvents = [
     awayTeam: 'Buffalo Bills',
     score: '21-17',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '2',
@@ -17,7 +17,7 @@ const mockEvents = [
     awayTeam: 'Liverpool',
     score: '2-1',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '3',
@@ -27,7 +27,7 @@ const mockEvents = [
     awayTeam: 'Barcelona',
     score: '3-2',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '4',
@@ -37,7 +37,7 @@ const mockEvents = [
     awayTeam: 'Pakistan',
     score: '187/4',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '5',
@@ -47,7 +47,7 @@ const mockEvents = [
     awayTeam: 'Boston Celtics',
     score: '98-95',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '6',
@@ -57,7 +57,7 @@ const mockEvents = [
     awayTeam: 'South Africa',
     score: '210/6',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '7',
@@ -67,7 +67,7 @@ const mockEvents = [
     awayTeam: 'Dynamo Moscow',
     score: '3-2',
     status: 'live',
-    timestamp: Date.now()
+    timestamp: Date.now(),
   },
   {
     id: '8',
@@ -77,58 +77,57 @@ const mockEvents = [
     awayTeam: 'Takohashi Carp',
     score: '5-3',
     status: 'live',
-    timestamp: Date.now()
-  }
-]
+    timestamp: Date.now(),
+  },
+];
 
-import { getCache, setCache } from '../utils/redisClient.js'
+import { getCache, setCache } from '../utils/redisClient.js';
 
 export const getSportsByCountry = async (country: string) => {
   try {
-    const cacheKey = `sports_by_country:${country.toLowerCase()}`
-    const cached = await getCache(cacheKey)
+    const cacheKey = `sports_by_country:${country.toLowerCase()}`;
+    const cached = await getCache(cacheKey);
     if (cached) {
-      return cached
+      return cached;
     }
 
     // Filter mock data by country
-    const filtered = mockEvents.filter(e => 
-      e.country.toLowerCase() === country.toLowerCase()
-    )
-    
-    // Cache the result for 30 seconds
-    await setCache(cacheKey, filtered, 30)
+    const filtered = mockEvents.filter(
+      (e) => e.country.toLowerCase() === country.toLowerCase()
+    );
 
-    return filtered
+    // Cache the result for 30 seconds
+    await setCache(cacheKey, filtered, 30);
+
+    return filtered;
   } catch (error) {
-    console.error('Error fetching sports data:', error)
-    throw error
+    console.error('Error fetching sports data:', error);
+    throw error;
   }
-}
+};
 
 export const getLiveEvents = async () => {
   try {
-    const cacheKey = 'sports_live_events'
-    const cached = await getCache(cacheKey)
+    const cacheKey = 'sports_live_events';
+    const cached = await getCache(cacheKey);
     if (cached) {
-      return cached
+      return cached;
     }
 
     // Return all mock events
-    const events = mockEvents
+    const events = mockEvents;
 
     // Cache the result for 15 seconds
-    await setCache(cacheKey, events, 15)
+    await setCache(cacheKey, events, 15);
 
-    return events
+    return events;
   } catch (error) {
-    console.error('Error fetching live events:', error)
-    throw error
+    console.error('Error fetching live events:', error);
+    throw error;
   }
-}
+};
 
 export default {
   getSportsByCountry,
-  getLiveEvents
-}
-
+  getLiveEvents,
+};

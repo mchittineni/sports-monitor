@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
-import { chatWithAI } from '../services/ai'
+import { useState, useRef, useEffect } from 'react';
+import { chatWithAI } from '../services/ai';
 
 interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export default function ChatAssistant() {
@@ -12,54 +12,55 @@ export default function ChatAssistant() {
     {
       id: '1',
       role: 'assistant',
-      content: '👋 Hi! I can help you find sports events, get match insights, and predictions. What would you like to know?'
-    }
-  ])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+      content:
+        '👋 Hi! I can help you find sports events, get match insights, and predictions. What would you like to know?',
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return
+    if (!input.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
 
     try {
-      const response = await chatWithAI(input)
+      const response = await chatWithAI(input);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response,
-      }
-      setMessages((prev) => [...prev, assistantMessage])
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: '❌ Sorry, I encountered an error. Please try again.',
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-80 bg-secondary border-t border-gray-700">
@@ -102,5 +103,5 @@ export default function ChatAssistant() {
         </div>
       </div>
     </div>
-  )
+  );
 }
