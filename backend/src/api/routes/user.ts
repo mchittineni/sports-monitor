@@ -17,7 +17,7 @@ router.get('/favorites', authMiddleware, async (req: AuthRequest, res: Response)
     )
 
     res.status(200).json({
-      favorites: result.map(r => r.sport)
+      favorites: result.map((r: any) => r.sport)
     })
   } catch (error) {
     console.error('Favorites error:', error)

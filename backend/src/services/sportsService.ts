@@ -81,12 +81,24 @@ const mockEvents = [
   }
 ]
 
+import { getCache, setCache } from '../utils/redisClient.js'
+
 export const getSportsByCountry = async (country: string) => {
   try {
+    const cacheKey = `sports_by_country:${country.toLowerCase()}`
+    const cached = await getCache(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     // Filter mock data by country
     const filtered = mockEvents.filter(e => 
       e.country.toLowerCase() === country.toLowerCase()
     )
+    
+    // Cache the result for 30 seconds
+    await setCache(cacheKey, filtered, 30)
+
     return filtered
   } catch (error) {
     console.error('Error fetching sports data:', error)
@@ -96,8 +108,19 @@ export const getSportsByCountry = async (country: string) => {
 
 export const getLiveEvents = async () => {
   try {
+    const cacheKey = 'sports_live_events'
+    const cached = await getCache(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     // Return all mock events
-    return mockEvents
+    const events = mockEvents
+
+    // Cache the result for 15 seconds
+    await setCache(cacheKey, events, 15)
+
+    return events
   } catch (error) {
     console.error('Error fetching live events:', error)
     throw error
@@ -108,3 +131,4 @@ export default {
   getSportsByCountry,
   getLiveEvents
 }
+

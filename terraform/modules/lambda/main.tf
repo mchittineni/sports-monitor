@@ -54,6 +54,12 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Attach X-Ray tracing policy
+resource "aws_iam_role_policy_attachment" "lambda_xray_execution" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
 # DynamoDB access policy
 resource "aws_iam_role_policy" "dynamodb_policy" {
   name = "dynamodb-policy"
@@ -71,7 +77,10 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
-        Resource = "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}"
+        Resource = [
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}",
+          "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}/index/*"
+        ]
       }
     ]
   })
@@ -94,6 +103,10 @@ resource "aws_lambda_function" "api_handler" {
       DYNAMODB_TABLE = var.dynamodb_table
       ENVIRONMENT    = var.environment
     }
+  }
+
+  tracing_config {
+    mode = "Active"
   }
 }
 
