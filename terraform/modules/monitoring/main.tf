@@ -14,6 +14,7 @@ variable "alarm_email" {
 resource "aws_cloudwatch_log_group" "api_logs" {
   name              = "${var.log_group_name}-${var.environment}"
   retention_in_days = var.environment == "prod" ? 30 : 7
+  kms_key_id        = aws_kms_key.sns.arn  # Reuse SNS KMS
 
   tags = {
     Name = "api-logs"
@@ -45,9 +46,21 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
 }
 
+# KMS Key for SNS encryption
+resource "aws_kms_key" "sns" {
+  description             = "KMS key for SNS encryption"
+  deletion_window_in_days = 10
+}
+
+resource "aws_kms_alias" "sns" {
+  name          = "alias/sports-monitor-sns-${var.environment}"
+  target_key_id = aws_kms_key.sns.key_id
+}
+
 # SNS Topic for alerts
 resource "aws_sns_topic" "alerts" {
-  name = "sports-monitor-alerts-${var.environment}"
+  name              = "sports-monitor-alerts-${var.environment}"
+  kms_master_key_id = aws_kms_key.sns.id
 }
 
 resource "aws_sns_topic_subscription" "alerts_email" {

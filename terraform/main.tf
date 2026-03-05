@@ -99,6 +99,10 @@ resource "aws_dynamodb_table" "sports_events" {
     enabled = true
   }
 
+  server_side_encryption {
+    enabled = true
+  }
+
   tags = {
     Name = "SportsEvents"
   }

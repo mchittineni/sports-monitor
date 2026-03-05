@@ -2,6 +2,17 @@ variable "environment" {
   type = string
 }
 
+# KMS Key for CloudWatch logs
+resource "aws_kms_key" "logs" {
+  description             = "KMS key for CloudWatch logs encryption"
+  deletion_window_in_days = 10
+}
+
+resource "aws_kms_alias" "logs" {
+  name          = "alias/sports-monitor-logs-${var.environment}"
+  target_key_id = aws_kms_key.logs.key_id
+}
+
 variable "lambda_invoke_arn" {
   type = string
 }
@@ -44,6 +55,7 @@ resource "aws_api_gateway_account" "main" {
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   name              = "/aws/apigateway/sports-monitor-api-${var.environment}"
   retention_in_days = 30
+  kms_key_id        = aws_kms_key.logs.arn
 }
 
 resource "aws_apigatewayv2_api" "main" {
