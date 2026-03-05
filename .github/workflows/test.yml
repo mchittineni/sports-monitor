@@ -41,6 +41,9 @@ jobs:
       - name: Type check
         run: npm run type-check
 
+      - name: Unit Test
+        run: npm run test:coverage
+
       - name: Build
         run: npm run build
 
@@ -73,6 +76,9 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
+
+      - name: Unit Test
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -116,36 +122,3 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
-
-      # - name: Terraform Init
-      #   run: |
-      #     cd terraform
-      #     terraform init \
-      #       -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-      #       -backend-config="key=${TF_ENV}/terraform.tfstate" \
-      #       -backend-config="region=us-east-1"
-
-      # - name: Terraform Plan
-      #   id: plan
-      #   run: |
-      #     cd terraform
-      #     terraform plan \
-      #       -var-file="environments/${TF_ENV}.tfvars" \
-      #       -var="db_username=${{ secrets.DB_USERNAME }}" \
-      #       -var="db_password=${{ secrets.DB_PASSWORD }}" \
-      #       -var="alarm_email=${{ secrets.ALARM_EMAIL }}" \
-      #       -out=tfplan
-
-      # - name: Comment PR with plan
-      #   if: github.event_name == 'pull_request'
-      #   uses: actions/github-script@v8
-      #   with:
-      #     script: |
-      #       const fs = require('fs');
-      #       const plan = fs.readFileSync('terraform/tfplan', 'utf8');
-      #       github.rest.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: `## Terraform Plan\n\`\`\`\n${plan}\n\`\`\``
-      #       })
