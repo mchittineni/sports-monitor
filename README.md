@@ -22,5 +22,7 @@ We've kept the documentation simple and focused so you can get up and running qu
 
 1. [Getting Started](docs/GETTING_STARTED.md): Step-by-step instructions on how to run this project locally using Docker.
 2. [Architecture](docs/ARCHITECTURE.md): A plain-English overview of how the frontend, backend, and databases talk to each other.
-3. [API Reference](docs/API_REFERENCE.md): How to use the interactive Swagger UI to explore and test the backend endpoints.
-4. [Security](docs/SECURITY.md): Important notes on how to keep the application secure when deploying to production.
+3. [Deployment Guide](docs/DEPLOYMENT.md): Learn how the app is deployed locally and in CI/CD using GitHub Actions.
+4. [Terraform Modules](docs/TERRAFORM_MODULES.md): A breakdown of the infrastructure-as-code configuration.
+5. [API Reference](docs/API_REFERENCE.md): How to use the interactive Swagger UI to explore and test the backend endpoints.
+6. [Security](docs/SECURITY.md): Important notes on how to keep the application secure when deploying to production.
