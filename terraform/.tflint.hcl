@@ -16,7 +16,7 @@ config {
   }
 
   # Variable files and inline variables
-  varfile = ["terraform.tfvars.example"]
+  varfile = ["environments/dev.tfvars"]
 }
 
 # AWS Plugin with latest rules
