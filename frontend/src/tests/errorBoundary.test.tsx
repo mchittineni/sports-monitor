@@ -28,7 +28,10 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.queryByText(/error/i)).toBeDefined();
+    expect(
+      screen.getByText('The application encountered an unexpected error.')
+    ).toBeDefined();
+    expect(screen.getByText('Error: Test error')).toBeDefined();
   });
 
   it('should have reset functionality', () => {

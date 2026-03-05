@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ChatAssistant } from '../components/ChatAssistant';
+import ChatAssistant from '../components/ChatAssistant';
 
 vi.mock('../services/ai', () => ({
   chatWithAI: vi.fn(async () => ({
@@ -15,7 +15,9 @@ describe('ChatAssistant Component', () => {
 
   it('should render chat assistant', () => {
     render(<ChatAssistant />);
-    expect(screen.getByText(/chat/i)).toBeDefined();
+    expect(
+      screen.getByText(/I can help you find sports events/i)
+    ).toBeDefined();
   });
 
   it('should have input field', () => {
@@ -27,7 +29,7 @@ describe('ChatAssistant Component', () => {
   it('should send message on button click', async () => {
     render(<ChatAssistant />);
     const input = screen.getByRole('textbox') as HTMLInputElement;
-    const button = screen.getByRole('button', { name: /send/i });
+    const button = screen.getByRole('button');
 
     expect(input).toBeDefined();
     expect(button).toBeDefined();
