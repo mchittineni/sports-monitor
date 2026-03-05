@@ -11,11 +11,17 @@ const SALT_ROUNDS = 10;
 // simple in-memory store used when running tests so we don't hit real DB
 const testUsers: Record<string, any> = {};
 
+/**
+ * Standard tokens payload returned after successful authentication.
+ */
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
 }
 
+/**
+ * Core info encoded within a JWT payload.
+ */
 export interface TokenPayload {
   userId: string;
   email: string;
@@ -23,11 +29,24 @@ export interface TokenPayload {
 }
 
 // Hash password
+/**
+ * Hashes a plaintext password using bcrypt with standard salt rounds.
+ *
+ * @param {string} password - The plain text password to hash.
+ * @returns {Promise<string>} The securely hashed password.
+ */
 export const hashPassword = async (password: string): Promise<string> => {
   return bcrypt.hash(password, SALT_ROUNDS);
 };
 
 // Compare password
+/**
+ * Compares a plaintext password against a stored hashed password.
+ *
+ * @param {string} password - The plain text password.
+ * @param {string} hashedPassword - The hashed password stored in the DB.
+ * @returns {Promise<boolean>} True if the password is valid, otherwise false.
+ */
 export const comparePasswords = async (
   password: string,
   hashedPassword: string
@@ -36,6 +55,12 @@ export const comparePasswords = async (
 };
 
 // Generate JWT tokens
+/**
+ * Generates both short-lived access and long-lived refresh JSON Web Tokens.
+ *
+ * @param {TokenPayload} payload - User object to serialize in the tokens.
+ * @returns {AuthTokens} An object containing accessToken and refreshToken.
+ */
 export const generateTokens = (payload: TokenPayload): AuthTokens => {
   const accessToken = jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,
@@ -51,6 +76,12 @@ export const generateTokens = (payload: TokenPayload): AuthTokens => {
 };
 
 // Verify token
+/**
+ * Verifies the validity of an existing JWT token and decodes it.
+ *
+ * @param {string} token - The raw JWT token string.
+ * @returns {TokenPayload | null} The decoded token payload containing user info, or null if invalid.
+ */
 export const verifyToken = (token: string): TokenPayload | null => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
@@ -62,6 +93,14 @@ export const verifyToken = (token: string): TokenPayload | null => {
 };
 
 // Register user
+/**
+ * Creates a new user record in the database securely.
+ *
+ * @param {string} email - The user's email address.
+ * @param {string} username - The user's requested username.
+ * @param {string} password - The plain text password to register with.
+ * @returns {Promise<{ id: string; email: string; username: string }>} Resulting user's core details.
+ */
 export const registerUser = async (
   email: string,
   username: string,
@@ -113,6 +152,13 @@ export const registerUser = async (
 };
 
 // Login user
+/**
+ * Validates user credentials and issues JWT tokens upon successful authentication.
+ *
+ * @param {string} email - The user email.
+ * @param {string} password - The unhashed password attempt.
+ * @returns {Promise<{ user: any; tokens: AuthTokens }>} User details paired with their new connection tokens.
+ */
 export const loginUser = async (
   email: string,
   password: string
@@ -170,6 +216,12 @@ export const loginUser = async (
 };
 
 // Get user by ID
+/**
+ * Retrieves core user details from the database by user ID.
+ *
+ * @param {string} userId - The unique user UUID.
+ * @returns {Promise<any | null>} The user's public info, excluding passwords and secure fields.
+ */
 export const getUserById = async (userId: string) => {
   try {
     if (process.env.NODE_ENV === 'test') {

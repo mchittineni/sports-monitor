@@ -59,8 +59,45 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+  try {
+    const memory = process.memoryUsage();
+    let dbStatus = 'ok';
+    let redisStatus = 'disconnected';
+
+    try {
+      const { query } = await import('./database/connection.js');
+      await query('SELECT 1');
+    } catch {
+      dbStatus = 'error';
+    }
+
+    try {
+      const { default: redis } = await import('./utils/redisClient.js');
+      if (redis && redis.status === 'ready') {
+        redisStatus = 'ready';
+      }
+    } catch {
+      redisStatus = 'error';
+    }
+
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbStatus,
+        redis: redisStatus,
+      },
+      metrics: {
+        memory: {
+          rss: `${Math.round(memory.rss / 1024 / 1024)} MB`,
+          heapUsed: `${Math.round(memory.heapUsed / 1024 / 1024)} MB`,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Health check failed' });
+  }
 });
 
 // API Routes

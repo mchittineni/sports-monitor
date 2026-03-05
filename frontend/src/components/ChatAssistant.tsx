@@ -1,12 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { chatWithAI } from '../services/ai';
 
+/**
+ * Message schema utilized specifically within the local chat interface.
+ */
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
 }
 
+/**
+ * Interactive chat assistant module that allows users to converse with AWS Bedrock AI.
+ * Handles scrolling, async state, and chat history internally.
+ *
+ * @returns {JSX.Element} The rendered conversational UI block.
+ */
 export default function ChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {

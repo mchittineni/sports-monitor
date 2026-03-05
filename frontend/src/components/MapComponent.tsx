@@ -3,6 +3,9 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useSportsStore } from '../store/sportsStore';
 
+/**
+ * Props expected by the MapComponent.
+ */
 interface MapComponentProps {
   onCountrySelect: (countryName: string) => void;
 }
@@ -18,6 +21,13 @@ const codeToCountryName: { [key: string]: string } = {
   JP: 'Japan',
 };
 
+/**
+ * Core React-Leaflet Map component that renders the global interactive map.
+ * Loads GeoJSON boundaries, binds click events, and dynamically shades countries based on live events.
+ *
+ * @param {MapComponentProps} props - The component props.
+ * @returns {JSX.Element} The rendered MapContainer.
+ */
 export default function MapComponent({ onCountrySelect }: MapComponentProps) {
   const mapRef = useRef(null);
   const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);

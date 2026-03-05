@@ -83,6 +83,13 @@ const mockEvents = [
 
 import { getCache, setCache } from '../utils/redisClient.js';
 
+/**
+ * Retrieves all mock sports events filtered by specific country name.
+ * Utilizes Redis strategy to cache queries for 30 seconds.
+ *
+ * @param {string} country - The name of the country to filter events by.
+ * @returns {Promise<any[]>} A list of matching sports events.
+ */
 export const getSportsByCountry = async (country: string) => {
   try {
     const cacheKey = `sports_by_country:${country.toLowerCase()}`;
@@ -106,6 +113,12 @@ export const getSportsByCountry = async (country: string) => {
   }
 };
 
+/**
+ * Retrieves all currently active live sports events.
+ * Utilizes Redis strategy to cache the results globally for 15 seconds.
+ *
+ * @returns {Promise<any[]>} An array of live local and international sports events.
+ */
 export const getLiveEvents = async () => {
   try {
     const cacheKey = 'sports_live_events';
