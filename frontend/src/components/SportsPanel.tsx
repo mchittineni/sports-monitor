@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { getSportsData } from '../services/api';
 import MatchCard from './MatchCard';
 
+/**
+ * Props expected by the SportsPanel component.
+ */
 interface SportsPanelProps {
   country: string;
 }
 
+/**
+ * Data shape representing a mapped local or international match.
+ */
 interface Match {
   id: string;
   sport: string;
@@ -16,6 +22,13 @@ interface Match {
   aiSummary?: string;
 }
 
+/**
+ * A sidebar panel that displays a list of ongoing or upcoming matches for a specific country.
+ * Automatically fetches fresh API data when the country prop changes.
+ *
+ * @param {SportsPanelProps} props - Component props containing the selected country name.
+ * @returns {JSX.Element} The rendered panel.
+ */
 export default function SportsPanel({ country }: SportsPanelProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);

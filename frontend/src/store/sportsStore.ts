@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 
+/**
+ * Data structure representing a single sports match or event.
+ */
 interface LiveEvent {
   id: string;
   country: string;
@@ -12,6 +15,9 @@ interface LiveEvent {
   timestamp: number;
 }
 
+/**
+ * Zustand state tree for managing global sports data.
+ */
 interface SportsStore {
   liveEvents: LiveEvent[];
   selectedCountry: string | null;
@@ -23,6 +29,10 @@ interface SportsStore {
   toggleSport: (sport: string) => void;
 }
 
+/**
+ * Provides a global state store for the React application to reactively manage
+ * live events, selected countries, and sport filters.
+ */
 export const useSportsStore = create<SportsStore>((set) => ({
   liveEvents: [],
   selectedCountry: null,

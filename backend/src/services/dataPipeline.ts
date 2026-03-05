@@ -1,3 +1,7 @@
+/**
+ * Starts the automated data pipeline that periodically fetches real-time sports data.
+ * It simulates fetching data every 30 seconds and logs the progress.
+ */
 export const startDataPipeline = () => {
   console.log('Starting data pipeline...');
 

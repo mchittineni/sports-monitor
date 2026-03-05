@@ -1,3 +1,6 @@
+/**
+ * Core event definition tailored for the frontend UI.
+ */
 interface Match {
   id: string;
   sport: string;
@@ -8,10 +11,20 @@ interface Match {
   aiSummary?: string;
 }
 
+/**
+ * Props expected by the MatchCard.
+ */
 interface MatchCardProps {
   match: Match;
 }
 
+/**
+ * Renders an isolated UI card detailing a single sports match.
+ * Includes dynamic color coding based on match status and optionally displays AI commentary.
+ *
+ * @param {MatchCardProps} props - The component attributes wrapping the match data.
+ * @returns {JSX.Element} A stylized card representing the match.
+ */
 export default function MatchCard({ match }: MatchCardProps) {
   const statusColors = {
     live: 'bg-red-500',
