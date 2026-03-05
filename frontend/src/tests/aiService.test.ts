@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import aiService, { chatWithAI } from '../services/ai';
 
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  const mockAxiosInstance = {
     post: vi.fn(() =>
       Promise.resolve({
         data: {
@@ -10,8 +10,23 @@ vi.mock('axios', () => ({
         },
       })
     ),
-  },
-}));
+    get: vi.fn(),
+    create: vi.fn().mockReturnThis(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+
+  return {
+    default: {
+      ...mockAxiosInstance,
+      create: vi.fn(() => mockAxiosInstance),
+    },
+    // Required for some ESM resolutions
+    create: vi.fn(() => mockAxiosInstance),
+  };
+});
 
 describe('AI Service', () => {
   beforeEach(() => {
@@ -22,7 +37,7 @@ describe('AI Service', () => {
     it('should send message to AI', async () => {
       const response = await chatWithAI('What sports are popular today?');
       expect(response).toBeDefined();
-      expect(response).toHaveProperty('response');
+      expect(response).toBe('Test AI response');
     });
 
     it('should handle empty message', async () => {

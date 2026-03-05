@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { test, expect, describe, vi } from 'vitest';
 import { api } from './setup';
 
