@@ -1,24 +1,24 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 
 interface LiveEvent {
-  id: string
-  country: string
-  country_code: string
-  sport: string
-  homeTeam: string
-  awayTeam: string
-  score: string
-  status: 'live' | 'upcoming' | 'finished'
-  timestamp: number
+  id: string;
+  country: string;
+  country_code: string;
+  sport: string;
+  homeTeam: string;
+  awayTeam: string;
+  score: string;
+  status: 'live' | 'upcoming' | 'finished';
+  timestamp: number;
 }
 
 interface SportsStore {
-  liveEvents: LiveEvent[]
-  selectedCountry: string | null
-  setLiveEvents: (events: LiveEvent[]) => void
-  setSelectedCountry: (country: string | null) => void
-  addEvent: (event: LiveEvent) => void
-  updateEvent: (id: string, event: Partial<LiveEvent>) => void
+  liveEvents: LiveEvent[];
+  selectedCountry: string | null;
+  setLiveEvents: (events: LiveEvent[]) => void;
+  setSelectedCountry: (country: string | null) => void;
+  addEvent: (event: LiveEvent) => void;
+  updateEvent: (id: string, event: Partial<LiveEvent>) => void;
 }
 
 export const useSportsStore = create<SportsStore>((set) => ({
@@ -39,4 +39,4 @@ export const useSportsStore = create<SportsStore>((set) => ({
         e.id === id ? { ...e, ...event } : e
       ),
     })),
-}))
+}));

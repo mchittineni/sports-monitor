@@ -1,15 +1,18 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime'
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from '@aws-sdk/client-bedrock-runtime';
 
 const bedrockClient = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || 'us-east-1'
-})
+  region: process.env.AWS_REGION || 'us-east-1',
+});
 
 interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
+  role: 'user' | 'assistant';
+  content: string;
 }
 
-const conversationHistory: ChatMessage[] = []
+const conversationHistory: ChatMessage[] = [];
 
 export const chatWithClaude = async (
   userMessage: string,
@@ -23,62 +26,63 @@ export const chatWithClaude = async (
 
     conversationHistory.push({
       role: 'user',
-      content: userMessage
-    })
+      content: userMessage,
+    });
 
-    const systemPrompt = context === 'sports'
-      ? `You are an expert sports commentator and analyst with deep knowledge of all major sports worldwide. 
+    const systemPrompt =
+      context === 'sports'
+        ? `You are an expert sports commentator and analyst with deep knowledge of all major sports worldwide. 
          Provide insights about ongoing matches, predictions, player statistics, and interesting facts about sports. 
          Be enthusiastic and engaging in your responses.`
-      : 'You are a helpful sports information assistant.'
+        : 'You are a helpful sports information assistant.';
 
-    const messages = conversationHistory.map(msg => ({
+    const messages = conversationHistory.map((msg) => ({
       role: msg.role,
-      content: msg.content
-    }))
+      content: msg.content,
+    }));
 
     const payload = {
       model: 'claude-3-sonnet-20240229',
       max_tokens: 1024,
       system: systemPrompt,
-      messages
-    }
+      messages,
+    };
 
     const command = new InvokeModelCommand({
       modelId: 'anthropic.claude-3-sonnet-20240229',
-      body: JSON.stringify(payload)
-    })
+      body: JSON.stringify(payload),
+    });
 
-    const response = await bedrockClient.send(command)
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body))
-    const assistantMessage = responseBody.content[0].text
+    const response = await bedrockClient.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    const assistantMessage = responseBody.content[0].text;
 
     conversationHistory.push({
       role: 'assistant',
-      content: assistantMessage
-    })
+      content: assistantMessage,
+    });
 
     // Keep last 10 messages for context
     if (conversationHistory.length > 20) {
-      conversationHistory.splice(0, 2)
+      conversationHistory.splice(0, 2);
     }
 
-    return assistantMessage
+    return assistantMessage;
   } catch (error) {
-    console.error('Error calling Bedrock:', error)
-    throw error
+    console.error('Error calling Bedrock:', error);
+    throw error;
   }
-}
+};
 
 export const generateMatchSummary = async (matchData: any): Promise<string> => {
   try {
     if (process.env.NODE_ENV === 'test') {
-      return `Mock summary for ${matchData.homeTeam} vs ${matchData.awayTeam}`
+      return `Mock summary for ${matchData.homeTeam} vs ${matchData.awayTeam}`;
     }
 
     const prompt = `Generate a brief, exciting 2-3 sentence commentary for this match:
     ${JSON.stringify(matchData, null, 2)}
-    Make it enthusiastic and informative.`
+    Make it enthusiastic and informative.`;
 
     const payload = {
       model: 'claude-3-sonnet-20240229',
@@ -86,38 +90,38 @@ export const generateMatchSummary = async (matchData: any): Promise<string> => {
       messages: [
         {
           role: 'user',
-          content: prompt
-        }
-      ]
-    }
+          content: prompt,
+        },
+      ],
+    };
 
     const command = new InvokeModelCommand({
       modelId: 'anthropic.claude-3-sonnet-20240229',
-      body: JSON.stringify(payload)
-    })
+      body: JSON.stringify(payload),
+    });
 
-    const response = await bedrockClient.send(command)
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body))
-    return responseBody.content[0].text
+    const response = await bedrockClient.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    return responseBody.content[0].text;
   } catch (error) {
-    console.error('Error generating summary:', error)
-    throw error
+    console.error('Error generating summary:', error);
+    throw error;
   }
-}
+};
 
 export const getPrediction = async (matchId: string): Promise<any> => {
   try {
     if (process.env.NODE_ENV === 'test') {
-      return { matchId, prediction: 'home', confidence: 0.75 }
+      return { matchId, prediction: 'home', confidence: 0.75 };
     }
     // TODO: Integrate with Amazon Forecast
     return {
       matchId,
       prediction: 'To be implemented with Amazon Forecast',
-      confidence: 0
-    }
+      confidence: 0,
+    };
   } catch (error) {
-    console.error('Prediction error:', error)
-    throw error
+    console.error('Prediction error:', error);
+    throw error;
   }
-}
+};

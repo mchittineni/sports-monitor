@@ -1,8 +1,15 @@
-import { CloudWatchClient, PutDashboardCommand } from '@aws-sdk/client-cloudwatch'
+import {
+  CloudWatchClient,
+  PutDashboardCommand,
+} from '@aws-sdk/client-cloudwatch';
 
-const cloudwatch = new CloudWatchClient({ region: process.env.AWS_REGION || 'us-east-1' })
+const cloudwatch = new CloudWatchClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+});
 
-export const createMonitoringDashboard = async (environment: string = 'dev') => {
+export const createMonitoringDashboard = async (
+  environment: string = 'dev'
+) => {
   try {
     const dashboardBody = {
       widgets: [
@@ -13,14 +20,14 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
               ['AWS/Lambda', 'Invocations', { stat: 'Sum' }],
               ['.', 'Duration', { stat: 'Average' }],
               ['.', 'Errors', { stat: 'Sum' }],
-              ['.', 'Throttles', { stat: 'Sum' }]
+              ['.', 'Throttles', { stat: 'Sum' }],
             ],
             period: 300,
             stat: 'Average',
             region: process.env.AWS_REGION || 'us-east-1',
             title: 'Lambda Function Metrics',
-            yAxis: { left: { min: 0 } }
-          }
+            yAxis: { left: { min: 0 } },
+          },
         },
         {
           type: 'metric',
@@ -29,14 +36,14 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
               ['AWS/RDS', 'CPUUtilization'],
               ['.', 'DatabaseConnections'],
               ['.', 'FreeableMemory'],
-              ['.', 'StorageSpace']
+              ['.', 'StorageSpace'],
             ],
             period: 300,
             stat: 'Average',
             region: process.env.AWS_REGION || 'us-east-1',
             title: 'RDS PostgreSQL Metrics',
-            yAxis: { left: { min: 0, max: 100 } }
-          }
+            yAxis: { left: { min: 0, max: 100 } },
+          },
         },
         {
           type: 'metric',
@@ -45,13 +52,13 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
               ['AWS/DynamoDB', 'ConsumedReadCapacityUnits'],
               ['.', 'ConsumedWriteCapacityUnits'],
               ['.', 'UserErrors'],
-              ['.', 'SystemErrors']
+              ['.', 'SystemErrors'],
             ],
             period: 60,
             stat: 'Sum',
             region: process.env.AWS_REGION || 'us-east-1',
-            title: 'DynamoDB Performance'
-          }
+            title: 'DynamoDB Performance',
+          },
         },
         {
           type: 'metric',
@@ -60,13 +67,13 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
               ['AWS/ApiGateway', 'Count'],
               ['.', 'Latency', { stat: 'Average' }],
               ['.', '4XXError', { stat: 'Sum' }],
-              ['.', '5XXError', { stat: 'Sum' }]
+              ['.', '5XXError', { stat: 'Sum' }],
             ],
             period: 300,
             stat: 'Average',
             region: process.env.AWS_REGION || 'us-east-1',
-            title: 'API Gateway Metrics'
-          }
+            title: 'API Gateway Metrics',
+          },
         },
         {
           type: 'log',
@@ -76,8 +83,8 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
                     | sort @timestamp desc`,
             region: process.env.AWS_REGION || 'us-east-1',
             title: 'API Response Time Analysis',
-            queryId: 'sports-monitor-dashboard-1'
-          }
+            queryId: 'sports-monitor-dashboard-1',
+          },
         },
         {
           type: 'metric',
@@ -86,29 +93,31 @@ export const createMonitoringDashboard = async (environment: string = 'dev') => 
               ['AWS/ElastiCache', 'CPUUtilization'],
               ['.', 'NetworkBytesIn'],
               ['.', 'NetworkBytesOut'],
-              ['.', 'EngineCPUUtilization']
+              ['.', 'EngineCPUUtilization'],
             ],
             period: 300,
             stat: 'Average',
             region: process.env.AWS_REGION || 'us-east-1',
-            title: 'Redis Cache Performance'
-          }
-        }
-      ]
-    }
+            title: 'Redis Cache Performance',
+          },
+        },
+      ],
+    };
 
     const command = new PutDashboardCommand({
       DashboardName: `SportsMonitor-${environment}`,
-      DashboardBody: JSON.stringify(dashboardBody)
-    })
+      DashboardBody: JSON.stringify(dashboardBody),
+    });
 
-    await cloudwatch.send(command)
-    console.log(`✅ CloudWatch dashboard created: SportsMonitor-${environment}`)
-    return `SportsMonitor-${environment}`
+    await cloudwatch.send(command);
+    console.log(
+      `✅ CloudWatch dashboard created: SportsMonitor-${environment}`
+    );
+    return `SportsMonitor-${environment}`;
   } catch (error) {
-    console.error('Failed to create dashboard:', error)
-    throw error
+    console.error('Failed to create dashboard:', error);
+    throw error;
   }
-}
+};
 
-export default { createMonitoringDashboard }
+export default { createMonitoringDashboard };

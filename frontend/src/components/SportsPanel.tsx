@@ -1,43 +1,43 @@
-import { useEffect, useState } from 'react'
-import { getSportsData } from '../services/api'
-import MatchCard from './MatchCard'
+import { useEffect, useState } from 'react';
+import { getSportsData } from '../services/api';
+import MatchCard from './MatchCard';
 
 interface SportsPanelProps {
-  country: string
+  country: string;
 }
 
 interface Match {
-  id: string
-  sport: string
-  homeTeam: string
-  awayTeam: string
-  score: string
-  status: 'live' | 'upcoming' | 'finished'
-  aiSummary?: string
+  id: string;
+  sport: string;
+  homeTeam: string;
+  awayTeam: string;
+  score: string;
+  status: 'live' | 'upcoming' | 'finished';
+  aiSummary?: string;
 }
 
 export default function SportsPanel({ country }: SportsPanelProps) {
-  const [matches, setMatches] = useState<Match[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSportsData = async () => {
       try {
-        setLoading(true)
-        const data = await getSportsData(country)
-        setMatches(data)
-        setError(null)
+        setLoading(true);
+        const data = await getSportsData(country);
+        setMatches(data);
+        setError(null);
       } catch (err) {
-        setError('Failed to load sports data')
-        console.error(err)
+        setError('Failed to load sports data');
+        console.error(err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchSportsData()
-  }, [country])
+    fetchSportsData();
+  }, [country]);
 
   if (loading) {
     return (
@@ -48,17 +48,15 @@ export default function SportsPanel({ country }: SportsPanelProps) {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
       <div className="p-4">
-        <div className="bg-red-900 text-red-100 p-3 rounded">
-          {error}
-        </div>
+        <div className="bg-red-900 text-red-100 p-3 rounded">{error}</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -70,10 +68,8 @@ export default function SportsPanel({ country }: SportsPanelProps) {
       {matches.length === 0 ? (
         <p className="text-gray-400 text-sm">No ongoing events</p>
       ) : (
-        matches.map((match) => (
-          <MatchCard key={match.id} match={match} />
-        ))
+        matches.map((match) => <MatchCard key={match.id} match={match} />)
       )}
     </div>
-  )
+  );
 }

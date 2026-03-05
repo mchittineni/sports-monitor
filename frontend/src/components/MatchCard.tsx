@@ -1,15 +1,15 @@
 interface Match {
-  id: string
-  sport: string
-  homeTeam: string
-  awayTeam: string
-  score: string
-  status: 'live' | 'upcoming' | 'finished'
-  aiSummary?: string
+  id: string;
+  sport: string;
+  homeTeam: string;
+  awayTeam: string;
+  score: string;
+  status: 'live' | 'upcoming' | 'finished';
+  aiSummary?: string;
 }
 
 interface MatchCardProps {
-  match: Match
+  match: Match;
 }
 
 export default function MatchCard({ match }: MatchCardProps) {
@@ -17,12 +17,14 @@ export default function MatchCard({ match }: MatchCardProps) {
     live: 'bg-red-500',
     upcoming: 'bg-yellow-500',
     finished: 'bg-gray-500',
-  }
+  };
 
   return (
     <div className="sports-card border border-gray-600">
       <div className="flex justify-between items-start mb-2">
-        <span className="text-xs font-semibold text-gray-300">{match.sport}</span>
+        <span className="text-xs font-semibold text-gray-300">
+          {match.sport}
+        </span>
         <span
           className={`text-xs font-bold px-2 py-1 rounded text-white ${
             statusColors[match.status]
@@ -44,5 +46,5 @@ export default function MatchCard({ match }: MatchCardProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
