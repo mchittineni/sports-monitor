@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MatchCard } from '../components/MatchCard';
+import MatchCard from '../components/MatchCard';
 
 describe('MatchCard Component', () => {
   const mockMatch = {
@@ -8,8 +8,9 @@ describe('MatchCard Component', () => {
     sport: 'football',
     homeTeam: 'France',
     awayTeam: 'Germany',
+    score: '1 - 0',
     startTime: '2024-01-15T20:00:00Z',
-    status: 'upcoming',
+    status: 'upcoming' as const,
   };
 
   beforeEach(() => {
@@ -33,10 +34,8 @@ describe('MatchCard Component', () => {
     expect(screen.queryByText(/upcoming/i)).toBeDefined();
   });
 
-  it('should be clickable', () => {
-    const onClick = vi.fn();
-    render(<MatchCard match={mockMatch} onClick={onClick} />);
-
+  it('should render without click handler', () => {
+    render(<MatchCard match={mockMatch} />);
     const card = screen.getByText('France').closest('div');
     expect(card).toBeDefined();
   });

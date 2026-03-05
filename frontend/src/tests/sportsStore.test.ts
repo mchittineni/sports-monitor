@@ -4,8 +4,7 @@ import { useSportsStore } from '../store/sportsStore';
 describe('Sports Store (Zustand)', () => {
   beforeEach(() => {
     // Reset store state
-    const store = useSportsStore.getState();
-    store.selectedSports = [];
+    useSportsStore.setState({ selectedSports: [] });
   });
 
   describe('selectedSports state', () => {
@@ -15,24 +14,21 @@ describe('Sports Store (Zustand)', () => {
     });
 
     it('should allow adding sports', () => {
-      const store = useSportsStore.getState();
-      store.toggleSport('football');
-      expect(store.selectedSports).toContain('football');
+      useSportsStore.getState().toggleSport('football');
+      expect(useSportsStore.getState().selectedSports).toContain('football');
     });
   });
 
   describe('toggleSport action', () => {
     it('should add sport when not selected', () => {
-      const store = useSportsStore.getState();
-      store.toggleSport('cricket');
-      expect(store.selectedSports).toContain('cricket');
+      useSportsStore.getState().toggleSport('cricket');
+      expect(useSportsStore.getState().selectedSports).toContain('cricket');
     });
 
     it('should remove sport when already selected', () => {
-      const store = useSportsStore.getState();
-      store.toggleSport('tennis');
-      store.toggleSport('tennis');
-      expect(store.selectedSports).not.toContain('tennis');
+      useSportsStore.getState().toggleSport('tennis');
+      useSportsStore.getState().toggleSport('tennis');
+      expect(useSportsStore.getState().selectedSports).not.toContain('tennis');
     });
   });
 

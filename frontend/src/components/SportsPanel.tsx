@@ -65,10 +65,12 @@ export default function SportsPanel({ country }: SportsPanelProps) {
         🏟️ {country}
       </h2>
 
-      {matches.length === 0 ? (
+      {(matches || []).length === 0 ? (
         <p className="text-gray-400 text-sm">No ongoing events</p>
       ) : (
-        matches.map((match) => <MatchCard key={match.id} match={match} />)
+        (matches || []).map((match) => (
+          <MatchCard key={match.id} match={match} />
+        ))
       )}
     </div>
   );

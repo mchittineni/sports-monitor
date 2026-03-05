@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MapComponent } from '../components/MapComponent';
+import MapComponent from '../components/MapComponent';
 
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children }: any) => <div>{children}</div>,
@@ -28,23 +28,23 @@ describe('MapComponent', () => {
   });
 
   it('should render map container', () => {
-    render(<MapComponent />);
+    render(<MapComponent onCountrySelect={() => {}} />);
     expect(screen.queryByText(/map/i)).toBeDefined();
   });
 
   it('should load events', async () => {
-    render(<MapComponent />);
+    render(<MapComponent onCountrySelect={() => {}} />);
     expect(screen.queryByText(/loading/i)).toBeDefined();
   });
 
   it('should handle map click', () => {
-    render(<MapComponent />);
+    render(<MapComponent onCountrySelect={() => {}} />);
     const map = screen.queryByRole('region');
     expect(map).toBeDefined();
   });
 
   it('should display event markers', async () => {
-    render(<MapComponent />);
+    render(<MapComponent onCountrySelect={() => {}} />);
     const markers = screen.queryAllByText(/marker/i);
     expect(markers).toBeDefined();
   });

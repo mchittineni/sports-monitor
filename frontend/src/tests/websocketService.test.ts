@@ -5,9 +5,26 @@ import {
   subscribeToUpdates,
 } from '../services/websocket';
 
-vi.mock('../services/api', () => ({
-  getBaseURL: () => 'http://localhost:3000',
-}));
+const mockOn = vi.fn((event: string, handler: (...args: any[]) => void) => {
+  if (event === 'connect') {
+    handler();
+  }
+});
+
+const mockDisconnect = vi.fn();
+
+vi.mock('socket.io-client', () => {
+  const io = vi.fn(() => ({
+    on: mockOn,
+    emit: vi.fn(),
+    disconnect: mockDisconnect,
+  }));
+
+  return {
+    __esModule: true,
+    default: io,
+  };
+});
 
 describe('WebSocket Service', () => {
   beforeEach(() => {

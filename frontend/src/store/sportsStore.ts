@@ -15,15 +15,18 @@ interface LiveEvent {
 interface SportsStore {
   liveEvents: LiveEvent[];
   selectedCountry: string | null;
+  selectedSports: string[];
   setLiveEvents: (events: LiveEvent[]) => void;
   setSelectedCountry: (country: string | null) => void;
   addEvent: (event: LiveEvent) => void;
   updateEvent: (id: string, event: Partial<LiveEvent>) => void;
+  toggleSport: (sport: string) => void;
 }
 
 export const useSportsStore = create<SportsStore>((set) => ({
   liveEvents: [],
   selectedCountry: null,
+  selectedSports: [],
 
   setLiveEvents: (events) => set({ liveEvents: events }),
   setSelectedCountry: (country) => set({ selectedCountry: country }),
@@ -39,4 +42,14 @@ export const useSportsStore = create<SportsStore>((set) => ({
         e.id === id ? { ...e, ...event } : e
       ),
     })),
+
+  toggleSport: (sport) =>
+    set((state) => {
+      const exists = state.selectedSports.includes(sport);
+      return {
+        selectedSports: exists
+          ? state.selectedSports.filter((s) => s !== sport)
+          : [...state.selectedSports, sport],
+      };
+    }),
 }));

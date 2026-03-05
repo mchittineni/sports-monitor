@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { chatWithAI, getSportRecommendations } from '../services/ai';
+import aiService, { chatWithAI } from '../services/ai';
 
 vi.mock('axios', () => ({
   default: {
@@ -31,19 +31,11 @@ describe('AI Service', () => {
     });
   });
 
-  describe('getSportRecommendations', () => {
-    it('should get sport recommendations', async () => {
-      const recommendations = await getSportRecommendations(['football']);
-      expect(recommendations).toBeDefined();
-      expect(Array.isArray(recommendations)).toBe(true);
-    });
-
-    it('should handle multiple sports', async () => {
-      const recommendations = await getSportRecommendations([
-        'football',
-        'basketball',
-      ]);
-      expect(recommendations).toBeDefined();
+  describe('ai service default export', () => {
+    it('should expose expected methods', () => {
+      expect(aiService).toHaveProperty('chatWithAI');
+      expect(aiService).toHaveProperty('generateMatchSummary');
+      expect(aiService).toHaveProperty('getPrediction');
     });
   });
 });

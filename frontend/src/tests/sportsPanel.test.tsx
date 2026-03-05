@@ -1,47 +1,51 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { SportsPanel } from '../components/SportsPanel';
+import { render, screen, waitFor } from '@testing-library/react';
+import SportsPanel from '../components/SportsPanel';
+import * as api from '../services/api';
 
-vi.mock('../services/api', () => ({
-  getSports: vi.fn(() =>
-    Promise.resolve([
-      { id: '1', name: 'Football' },
-      { id: '2', name: 'Basketball' },
-    ])
-  ),
-}));
-
-vi.mock('../store/sportsStore', () => ({
-  useSportsStore: () => ({
-    selectedSports: ['Football'],
-    toggleSport: vi.fn(),
-  }),
-}));
+vi.mock('../services/api');
 
 describe('SportsPanel Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should render sports panel', () => {
-    render(<SportsPanel />);
-    expect(screen.queryByText(/sport/i)).toBeDefined();
+  it('should render country heading', async () => {
+    render(<SportsPanel country="France" />);
+
+    await waitFor(() => {
+      const headings = screen.getAllByText(/France/);
+      expect(headings.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should display list of sports', async () => {
-    render(<SportsPanel />);
-    expect(screen.queryByText(/football/i)).toBeDefined();
+  it('should display list of matches', async () => {
+    (api.getSportsData as any).mockResolvedValue([
+      {
+        id: '1',
+        sport: 'football',
+        homeTeam: 'France',
+        awayTeam: 'Germany',
+        score: '1 - 0',
+        status: 'live',
+      },
+    ]);
+
+    render(<SportsPanel country="France" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('France')).toBeDefined();
+      expect(screen.getByText('Germany')).toBeDefined();
+    });
   });
 
-  it('should allow sport selection', () => {
-    render(<SportsPanel />);
-    const checkboxes = screen.queryAllByRole('checkbox');
-    expect(checkboxes.length).toBeGreaterThan(0);
-  });
+  it('should show empty state when no matches', async () => {
+    (api.getSportsData as any).mockResolvedValue([]);
 
-  it('should highlight selected sports', () => {
-    render(<SportsPanel />);
-    const football = screen.queryByText(/football/i);
-    expect(football).toBeDefined();
+    render(<SportsPanel country="France" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/No ongoing events/i)).toBeDefined();
+    });
   });
 });

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  getEvents,
-  getSports,
-  getMatchDetails,
+import apiClient, {
+  getSportsData,
+  getLiveEvents,
+  getCountryStats,
 } from '../services/api';
 
 vi.mock('axios', () => ({
@@ -33,32 +33,33 @@ describe('API Service', () => {
     vi.clearAllMocks();
   });
 
-  describe('getEvents', () => {
-    it('should fetch events', async () => {
-      const events = await getEvents();
-      expect(events).toBeDefined();
-      expect(Array.isArray(events)).toBe(true);
-    });
-
-    it('should filter events by sport', async () => {
-      const events = await getEvents('football');
-      expect(events).toBeDefined();
+  describe('getSportsData', () => {
+    it('should fetch sports data for a country', async () => {
+      const data = await getSportsData('France');
+      expect(data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
     });
   });
 
-  describe('getSports', () => {
-    it('should fetch available sports', async () => {
-      const sports = await getSports();
-      expect(sports).toBeDefined();
-      expect(Array.isArray(sports)).toBe(true);
+  describe('getLiveEvents', () => {
+    it('should fetch live events', async () => {
+      const events = await getLiveEvents();
+      expect(events).toBeDefined();
+      expect(Array.isArray(events.data)).toBe(true);
     });
   });
 
-  describe('getMatchDetails', () => {
-    it('should fetch match details', async () => {
-      const match = await getMatchDetails('match-1');
-      expect(match).toBeDefined();
-      expect(match).toHaveProperty('id');
+  describe('getCountryStats', () => {
+    it('should fetch country stats', async () => {
+      const stats = await getCountryStats('FR');
+      expect(stats).toBeDefined();
+      expect(stats).toHaveProperty('data');
+    });
+  });
+
+  describe('default api client', () => {
+    it('should be defined', () => {
+      expect(apiClient).toBeDefined();
     });
   });
 });

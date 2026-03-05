@@ -21,7 +21,12 @@ export default function ChatAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (
+      messagesEndRef.current &&
+      typeof (messagesEndRef.current as any).scrollIntoView === 'function'
+    ) {
+      (messagesEndRef.current as any).scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
