@@ -2,12 +2,8 @@ name: Build & Push Docker Images
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "frontend/**"
-      - "backend/**"
-      - "docker-compose.yml"
-      - ".github/workflows/build.yml"
+    branches:
+      - main
 
 concurrency:
   group: build-${{ github.ref }}
