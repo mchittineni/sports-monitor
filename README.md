@@ -1,42 +1,26 @@
-## sports-monitor
-An AI-powered, cloud-native web application that visualizes live sports activity across the world in real time through an interactive map interface.
+# 🌍 Sports Monitor
 
-### Security, availability, and scalability highlights
+Welcome to **Sports Monitor**! This is a modern, cloud-native web application that visualizes live sports activity around the world in real-time through an interactive and beautiful map interface.
 
-- **Secure by default**
-  - HTTP security headers via `helmet`.
-  - JWT authentication with bcrypt-hashed passwords.
-  - Rate limiting on all API routes to reduce abuse.
-  - CORS restricted to the configured frontend origin.
-  - Secrets loaded strictly from environment variables or a secrets manager in production.
+## 🚀 Features
 
-- **Highly available & scalable**
-  - AWS API Gateway + Lambda for auto-scaling API compute.
-  - DynamoDB on-demand for real-time events with TTL cleanup.
-  - RDS PostgreSQL with encryption, automated backups, and Multi-AZ in production.
-  - S3 + CloudFront for global, cached delivery of the React frontend.
+- **Interactive Global Map**: Click on any country to see what sports events are currently live or scheduled.
+- **Real-Time Updates**: Powered by WebSockets and cached through Redis for instantaneous data delivery.
+- **AI Assistant**: Chat with an integrated AI assistant (powered by AWS Bedrock / Claude 3) to ask about match statistics or get live summaries of your favorite games.
+- **Highly Secure**: Features JWT authentication, hashed passwords, rate limiting, and HTTP security headers out of the box.
 
-- **Cost-conscious**
-  - Small RDS instance types in non‑production.
-  - On-demand DynamoDB tables and serverless compute to align cost with usage.
-  - Environment-specific log retention and monitoring.
+## 🛠️ Tech Stack
 
-### Project structure and docs
+- **Frontend**: React, Vite, TailwindCSS, React-Leaflet, Zustand.
+- **Backend**: Node.js, Express, Socket.io, TypeScript.
+- **Database Layer**: PostgreSQL (users & teams), DynamoDB (live volatile events), Redis (query caching).
+- **Infrastructure**: AWS (Lambda, API Gateway, CloudFront, S3, RDS) deployed via Terraform.
 
-- **Application**
-  - `backend/` – Node.js/Express API, WebSocket server, auth, AI, and data pipeline.
-  - `frontend/` – React + Vite SPA with interactive map and AI assistant.
+## 📖 Documentation
 
-- **Infrastructure and operations**
-  - `terraform/` – AWS infrastructure as code (VPC, RDS, DynamoDB, Lambda, API Gateway, CloudFront, S3, monitoring).
-  - `docker-compose.yml` – Local development stack (PostgreSQL, Redis, backend, frontend).
-  - `.github/workflows/` – CI/CD pipelines for planning and applying Terraform and deploying the app.
+We've kept the documentation simple and focused so you can get up and running quickly:
 
-- **Documentation**
-  - `docs/SETUP.md` – End-to-end setup guide, environments, and deployment.
-  - `docs/ARCHITECTURE.md` – System, security, and scaling architecture diagrams.
-  - `docs/SECURITY.md` – Practical hardening, availability, and cost-control guidance.
-  - `docs/CHECKLIST.md` – Completed feature and deployment checklist.
-  - `docs/SUMMARY.md`, `docs/IMPLEMENTATION.md`, `docs/FILE_INVENTORY.md` – Deep-dive implementation details.
-
-Sensitive configuration values are stored only in environment files (not checked in) and should be managed by a vault or secrets manager. JWT tokens, database passwords, and AWS credentials must never be committed, and HTTPS should always be enforced in production. Follow the security checklist in `docs/SETUP.md` and `docs/SECURITY.md` before deployment.
+1. [Getting Started](docs/GETTING_STARTED.md): Step-by-step instructions on how to run this project locally using Docker.
+2. [Architecture](docs/ARCHITECTURE.md): A plain-English overview of how the frontend, backend, and databases talk to each other.
+3. [API Reference](docs/API_REFERENCE.md): How to use the interactive Swagger UI to explore and test the backend endpoints.
+4. [Security](docs/SECURITY.md): Important notes on how to keep the application secure when deploying to production.

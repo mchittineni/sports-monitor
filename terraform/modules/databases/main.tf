@@ -68,9 +68,12 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = "sports-monitor-${var.environment}-final-snapshot"
 
-  deletion_protection = var.environment == "prod"
+  deletion_protection                 = var.environment == "prod"
+  publicly_accessible                 = false
+  iam_database_authentication_enabled = true
+  performance_insights_enabled        = true
 
-  enabled_cloudwatch_logs_exports = ["postgresql"]
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   tags = {
     Name = "sports-monitor-db"

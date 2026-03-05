@@ -7,7 +7,7 @@ describe('Frontend Component Tests', () => {
       const container = document.createElement('div')
       container.className = 'leaflet-container'
       
-      expect(container).toHaveClass('leaflet-container')
+      expect(container.className).toBe('leaflet-container')
     })
   })
 

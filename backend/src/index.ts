@@ -14,6 +14,7 @@ import { setupSwagger } from './config/swagger.js'
 import { initializeWebSocket } from './services/websocketService.js'
 import { initializeDatabaseConnection } from './database/connection.js'
 import { startDataPipeline } from './services/dataPipeline.js'
+import { errorHandler } from './api/middleware/errorHandler.js'
 
 dotenv.config()
 
@@ -70,6 +71,9 @@ app.use('/api/stats', statsRoutes)
 
 // Setup Swagger API documentation
 setupSwagger(app)
+
+// Register global error handler middleware
+app.use(errorHandler)
 
 // WebSocket initialization
 initializeWebSocket(io)

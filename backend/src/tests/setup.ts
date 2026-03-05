@@ -3,6 +3,7 @@ process.env.NODE_ENV = 'test'
 
 import request from 'supertest'
 import app from '../index'
+import { beforeAll } from 'vitest'
 
 // no-op beforeAll
 beforeAll(() => {})

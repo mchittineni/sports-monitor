@@ -12,6 +12,40 @@ variable "allowed_origins" {
   default     = ["*"]
 }
 
+# IAM Role for API Gateway CloudWatch Logging
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "api-gateway-cloudwatch-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
+  role       = aws_iam_role.api_gateway_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+# Attach IAM Role to API Gateway Account
+# Note: This is an account-level setting. In multi-tenant AWS accounts this might clash.
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+}
+
+resource "aws_cloudwatch_log_group" "api_gateway_logs" {
+  name              = "/aws/apigateway/sports-monitor-api-${var.environment}"
+  retention_in_days = 30
+}
+
 resource "aws_apigatewayv2_api" "main" {
   name          = "sports-monitor-api-${var.environment}"
   protocol_type = "HTTP"
@@ -31,7 +65,7 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_type       = "AWS_PROXY"
   integration_method     = "POST"
   payload_format_version = "2.0"
-  uri                    = var.lambda_invoke_arn
+  integration_uri        = var.lambda_invoke_arn
 }
 
 resource "aws_apigatewayv2_route" "api_route" {
@@ -49,6 +83,21 @@ resource "aws_apigatewayv2_stage" "main" {
   default_route_settings {
     throttling_burst_limit = 100
     throttling_rate_limit  = 50
+  }
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
+    format = jsonencode({
+      requestId               = "$context.requestId"
+      sourceIp                = "$context.identity.sourceIp"
+      requestTime             = "$context.requestTime"
+      protocol                = "$context.protocol"
+      httpMethod              = "$context.httpMethod"
+      resourcePath            = "$context.routeKey"
+      status                  = "$context.status"
+      responseLength          = "$context.responseLength"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+    })
   }
 }
 

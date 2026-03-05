@@ -80,18 +80,18 @@ export default function MapComponent({ onCountrySelect }: MapComponentProps) {
             highlightFeature(e)
           })
 
-          ;(layer as any).on('mouseover', function () {
-            ;(this as any).setStyle({
+          ;(layer as any).on('mouseover', (e: any) => {
+            e.target.setStyle({
               weight: 2.5,
               color: '#3b82f6',
             })
           })
 
-          ;(layer as any).on('mouseout', function () {
-            const code = (this as any).feature.properties.iso_a2
-            const countryName = codeToCountryName[code] || (this as any).feature.properties.name
+          ;(layer as any).on('mouseout', (e: any) => {
+            const code = e.target.feature.properties.iso_a2
+            const countryName = codeToCountryName[code] || e.target.feature.properties.name
             const eventCount = liveEvents.filter((e) => e.country === countryName).length
-            ;(this as any).setStyle({
+            e.target.setStyle({
               fillColor: getColor(eventCount),
               weight: 1.5,
               color: '#fff',
