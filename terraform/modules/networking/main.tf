@@ -2,6 +2,17 @@ variable "vpc_cidr" {
   type = string
 }
 
+# KMS Key for VPC flow logs
+resource "aws_kms_key" "vpc_flow_logs" {
+  description             = "KMS key for VPC flow logs encryption"
+  deletion_window_in_days = 10
+}
+
+resource "aws_kms_alias" "vpc_flow_logs" {
+  name          = "alias/sports-monitor-vpc-flow-logs-${var.environment}"
+  target_key_id = aws_kms_key.vpc_flow_logs.key_id
+}
+
 variable "availability_zones" {
   type = list(string)
 }
@@ -25,6 +36,7 @@ resource "aws_vpc" "main" {
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/sports-monitor-flow-logs-${var.environment}"
   retention_in_days = 30
+  kms_key_id        = aws_kms_key.vpc_flow_logs.arn
 }
 
 resource "aws_iam_role" "vpc_flow_log_role" {
@@ -60,7 +72,7 @@ resource "aws_iam_role_policy" "vpc_flow_log_policy" {
           "logs:DescribeLogStreams"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = "arn:aws:logs:*:*:log-group:/aws/vpc/sports-monitor-flow-logs-${var.environment}"
       }
     ]
   })
@@ -79,7 +91,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.${count.index * 10 + 0}.0/24"
   availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name = "public-subnet-${count.index + 1}"
