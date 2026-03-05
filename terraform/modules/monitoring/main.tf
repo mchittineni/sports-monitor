@@ -50,6 +50,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu" {
 resource "aws_kms_key" "sns" {
   description             = "KMS key for SNS encryption"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
 }
 
 resource "aws_kms_alias" "sns" {

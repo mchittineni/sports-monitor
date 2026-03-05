@@ -6,6 +6,18 @@ variable "frontend_bucket_name" {
   type = string
 }
 
+# KMS Key for S3 encryption
+resource "aws_kms_key" "s3" {
+  description             = "KMS key for S3 bucket encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "s3" {
+  name          = "alias/sports-monitor-s3-${var.environment}"
+  target_key_id = aws_kms_key.s3.key_id
+}
+
 # S3 bucket for frontend
 resource "aws_s3_bucket" "frontend" {
   bucket = var.frontend_bucket_name
@@ -16,8 +28,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.s3.arn
     }
+    bucket_key_enabled = true
   }
 }
 
@@ -61,9 +75,48 @@ resource "aws_s3_bucket_policy" "frontend_public" {
   })
 }
 
+# WAF for CloudFront
+resource "aws_wafv2_web_acl" "frontend" {
+  name  = "sports-monitor-frontend-waf-${var.environment}"
+  scope = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 0
+
+    action {
+      block {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesCommonRuleSetMetric"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "sports-monitor-frontend-waf"
+    sampled_requests_enabled   = true
+  }
+}
+
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "frontend" {
-  enabled = true
+  enabled    = true
+  web_acl_id = aws_wafv2_web_acl.frontend.arn
   
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name

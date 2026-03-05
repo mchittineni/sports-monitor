@@ -32,29 +32,41 @@ provider "aws" {
 module "networking" {
   source = "./modules/networking"
 
-  vpc_cidr             = var.vpc_cidr
-  availability_zones   = var.availability_zones
-  environment          = var.environment
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
+  environment        = var.environment
 }
 
 # RDS PostgreSQL Database
 module "databases" {
   source = "./modules/databases"
 
-  vpc_id             = module.networking.vpc_id
-  environment        = var.environment
-  db_name            = var.db_name
-  db_username        = var.db_username
-  db_password        = var.db_password
-  multi_az           = var.environment == "prod" ? true : false
+  vpc_id      = module.networking.vpc_id
+  environment = var.environment
+  db_name     = var.db_name
+  db_username = var.db_username
+  db_password = var.db_password
+  multi_az    = var.environment == "prod" ? true : false
+}
+
+# KMS Key for DynamoDB encryption
+resource "aws_kms_key" "dynamodb" {
+  description             = "KMS key for DynamoDB encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "dynamodb" {
+  name          = "alias/sports-monitor-dynamodb-${var.environment}"
+  target_key_id = aws_kms_key.dynamodb.key_id
 }
 
 # DynamoDB Tables
 resource "aws_dynamodb_table" "sports_events" {
-  name           = "SportsEvents-${var.environment}"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "pk"
-  range_key      = "sk"
+  name         = "SportsEvents-${var.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
 
   attribute {
     name = "pk"
@@ -100,7 +112,8 @@ resource "aws_dynamodb_table" "sports_events" {
   }
 
   server_side_encryption {
-    enabled = true
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb.arn
   }
 
   tags = {
@@ -112,7 +125,7 @@ resource "aws_dynamodb_table" "sports_events" {
 module "api_gateway" {
   source = "./modules/api-gateway"
 
-  environment      = var.environment
+  environment       = var.environment
   lambda_invoke_arn = module.lambda.api_handler_invoke_arn
   # Override this per environment if you want stricter CORS
   # (for example, to only allow your production frontend domain).
@@ -123,30 +136,30 @@ module "api_gateway" {
 module "lambda" {
   source = "./modules/lambda"
 
-  environment        = var.environment
-  vpc_id            = module.networking.vpc_id
-  function_name     = "sports-monitor-api"
-  handler           = "dist/index.handler"
-  runtime           = "nodejs18.x"
-  db_host           = module.databases.db_endpoint
-  db_name           = var.db_name
-  dynamodb_table    = aws_dynamodb_table.sports_events.name
+  environment    = var.environment
+  vpc_id         = module.networking.vpc_id
+  function_name  = "sports-monitor-api"
+  handler        = "dist/index.handler"
+  runtime        = "nodejs18.x"
+  db_host        = module.databases.db_endpoint
+  db_name        = var.db_name
+  dynamodb_table = aws_dynamodb_table.sports_events.name
 }
 
 # AI Services (AWS Bedrock)
 module "ai_services" {
   source = "./modules/ai-services"
 
-  environment      = var.environment
-  vpc_id           = module.networking.vpc_id
-  lambda_role_arn  = module.lambda.lambda_role_arn
+  environment     = var.environment
+  vpc_id          = module.networking.vpc_id
+  lambda_role_arn = module.lambda.lambda_role_arn
 }
 
 # S3 for Frontend Hosting
 module "frontend" {
   source = "./modules/frontend"
 
-  environment         = var.environment
+  environment          = var.environment
   frontend_bucket_name = "sports-monitor-frontend-${var.environment}"
 }
 
@@ -154,9 +167,9 @@ module "frontend" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  environment      = var.environment
-  log_group_name   = "/aws/lambda/sports-monitor"
-  alarm_email      = var.alarm_email
+  environment    = var.environment
+  log_group_name = "/aws/lambda/sports-monitor"
+  alarm_email    = var.alarm_email
 }
 
 # Outputs

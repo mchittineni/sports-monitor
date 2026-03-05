@@ -28,6 +28,7 @@ variable "multi_az" {
 resource "aws_kms_key" "rds" {
   description             = "KMS key for RDS encryption"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
 }
 
 resource "aws_kms_alias" "rds" {
@@ -80,7 +81,7 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = "sports-monitor-${var.environment}-final-snapshot"
 
-  deletion_protection                 = var.environment == "prod"
+  deletion_protection                 = true
   publicly_accessible                 = false
   iam_database_authentication_enabled = true
   performance_insights_enabled        = true
