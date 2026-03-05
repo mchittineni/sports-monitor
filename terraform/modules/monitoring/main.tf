@@ -1,13 +1,16 @@
 variable "environment" {
-  type = string
+  type        = string
+  description = "The deployment environment, used to separate dev/prod monitoring metrics."
 }
 
 variable "log_group_name" {
-  type = string
+  type        = string
+  description = "Prefix name for the primary CloudWatch log group."
 }
 
 variable "alarm_email" {
-  type = string
+  type        = string
+  description = "The destination email address to receive SNS alerts for infrastructure alarms."
 }
 
 # CloudWatch Log Group
@@ -71,5 +74,6 @@ resource "aws_sns_topic_subscription" "alerts_email" {
 }
 
 output "log_group" {
-  value = aws_cloudwatch_log_group.api_logs.name
+  value       = aws_cloudwatch_log_group.api_logs.name
+  description = "The full name of the created CloudWatch log group."
 }
