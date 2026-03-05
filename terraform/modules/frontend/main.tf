@@ -65,11 +65,11 @@ resource "aws_s3_bucket_policy" "frontend_public" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "PublicRead"
-        Effect = "Allow"
+        Sid       = "PublicRead"
+        Effect    = "Allow"
         Principal = "*"
-        Action = "s3:GetObject"
-        Resource = "${aws_s3_bucket.frontend.arn}/*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.frontend.arn}/*"
       }
     ]
   })
@@ -117,7 +117,7 @@ resource "aws_wafv2_web_acl" "frontend" {
 resource "aws_cloudfront_distribution" "frontend" {
   enabled    = true
   web_acl_id = aws_wafv2_web_acl.frontend.arn
-  
+
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id   = "S3Frontend"

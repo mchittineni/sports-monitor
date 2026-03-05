@@ -15,8 +15,8 @@ variable "db_username" {
 }
 
 variable "db_password" {
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "multi_az" {
@@ -59,15 +59,15 @@ resource "aws_security_group" "rds_sg" {
 
 # RDS Database
 resource "aws_db_instance" "postgres" {
-  identifier            = "sports-monitor-${var.environment}"
-  engine                = "postgres"
-  engine_version        = "15.3"
-  instance_class        = var.environment == "prod" ? "db.t3.medium" : "db.t3.micro"
-  allocated_storage     = 20
-  storage_type          = "gp3"
-  multi_az              = var.multi_az
-  storage_encrypted     = true
-  
+  identifier        = "sports-monitor-${var.environment}"
+  engine            = "postgres"
+  engine_version    = "15.3"
+  instance_class    = var.environment == "prod" ? "db.t3.medium" : "db.t3.micro"
+  allocated_storage = 20
+  storage_type      = "gp3"
+  multi_az          = var.multi_az
+  storage_encrypted = true
+
   db_name  = var.db_name
   username = var.db_username
   password = var.db_password
@@ -75,8 +75,8 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
   backup_retention_period = var.environment == "prod" ? 30 : 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = "sports-monitor-${var.environment}-final-snapshot"
@@ -85,7 +85,7 @@ resource "aws_db_instance" "postgres" {
   publicly_accessible                 = false
   iam_database_authentication_enabled = true
   performance_insights_enabled        = true
-  performance_insights_kms_key_id   = aws_kms_key.rds.arn
+  performance_insights_kms_key_id     = aws_kms_key.rds.arn
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 

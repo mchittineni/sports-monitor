@@ -88,7 +88,7 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 
 # Lambda function
 resource "aws_lambda_function" "api_handler" {
-  filename      = "lambda_function.zip"  # Package during build
+  filename      = "lambda_function.zip" # Package during build
   function_name = var.function_name
   handler       = var.handler
   runtime       = var.runtime
