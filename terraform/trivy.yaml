@@ -1,0 +1,35 @@
+# trivy.yaml - The 2026 successor to tfsec.yml
+# This file lives in your root or /terraform directory
+
+# --- Global Scan Settings ---
+scan:
+  # 'misconfig' covers all Terraform rules (formerly tfsec)
+  # 'secret' finds hardcoded AWS keys/passwords
+  scanners:
+    - misconfig
+    - secret
+
+# --- Misconfiguration (Terraform) Settings ---
+misconfig:
+  # Enforce by severity (Industry Standard)
+  severity:
+    - HIGH
+    - CRITICAL
+  # Point to your terraform folder
+  terraform:
+    vars:
+      - ./terraform/environments/dev.tfvars
+
+# --- Filtering ---
+exclude-paths:
+  - .terraform
+  - .git
+  - docs
+  - tests
+  - scripts
+  - '**/*.tfstate'
+
+# --- Report Output ---
+report:
+  format: table # Use 'sarif' for GitHub Security tab integration
+  exit-code: 1   # Fail the build if findings are found
