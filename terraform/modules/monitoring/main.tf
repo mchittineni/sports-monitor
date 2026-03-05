@@ -14,7 +14,7 @@ variable "alarm_email" {
 resource "aws_cloudwatch_log_group" "api_logs" {
   name              = "${var.log_group_name}-${var.environment}"
   retention_in_days = var.environment == "prod" ? 30 : 7
-  kms_key_id        = aws_kms_key.sns.arn  # Reuse SNS KMS
+  kms_key_id        = aws_kms_key.sns.arn # Reuse SNS KMS
 
   tags = {
     Name = "api-logs"
