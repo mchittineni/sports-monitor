@@ -118,6 +118,7 @@ jobs:
         uses: terraform-linters/setup-tflint@v6        
         with:
           tflint_version: latest
+          tflint_config_path: terraform/.tflint.hcl
           cache: true
 
       - name: Run TFLint
@@ -138,7 +139,7 @@ jobs:
           soft_fail: true
 
       - name: Upload Security Results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: '.' 
