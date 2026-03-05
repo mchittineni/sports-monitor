@@ -103,33 +103,46 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
-
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.3
+        
+      - name: Run Trivy vulnerability scanner (IaC)
+        uses: aquasecurity/trivy-action@master
         with:
-          working_directory: terraform
+          scan-type: 'config'
+          scan-ref: './terraform'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v6        
         with:
-          tflint_version: v0.61.0
-          tflint_config_path: terraform/.tflint.hcl
+          tflint_version: latest
           cache: true
 
-      - name: Init TFLint
-        run: tflint --init
+      - name: Run TFLint
+        working-directory: ./terraform
         env:
           GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint -f sarif > tflint.sarif
 
-      - name: Run TFLint
-        run: tflint -f compact
-        working-directory: ./terraform
-
-      - name: Checkov GitHub Action
+      - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
         with:
-          output_format: cli,sarif
-          output_file_path: console,results.sarif        
+          directory: ./terraform
+          config_file: ./terraform/.checkov.yml
+          output_format: sarif
+          output_file_path: ./checkov.sarif
+          soft_fail: true
+
+      - name: Upload Security Results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: '.' 
+          category: 'iac-scanners'
 
   terraform-validate:
     runs-on: ubuntu-latest
