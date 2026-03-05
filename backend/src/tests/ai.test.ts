@@ -33,12 +33,10 @@ afterAll(() => {
 describe('AI API', () => {
   describe('POST /ai/chat', () => {
     test('should respond to sports question', async () => {
-      const response = await request(app)
-        .post('/api/ai/chat')
-        .send({
-          message: 'What sports events are happening today?',
-          context: 'sports',
-        });
+      const response = await request(app).post('/api/ai/chat').send({
+        message: 'What sports events are happening today?',
+        context: 'sports',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('response');
