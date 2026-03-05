@@ -4,6 +4,7 @@ import { api } from './setup';
 const testUserEmail = `test-${Date.now()}@sports-monitor.com`;
 const testUsername = `testuser${Date.now()}`;
 let authToken: string;
+let userId: string;
 
 // simple in-memory store to mimic user database
 const users: Record<string, any> = {};
