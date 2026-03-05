@@ -17,4 +17,19 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  // Vitest configuration
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    css: true,
+    coverage: {
+      provider: 'v8', // or 'istanbul'
+      reporter: ['text', 'json', 'html', 'json-summary'],
+    },
+    server: {
+      deps: {
+        inline: ['axios'],
+      },
+    },
+  },
 });

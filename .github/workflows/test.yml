@@ -41,6 +41,9 @@ jobs:
       - name: Type check
         run: npm run type-check
 
+      - name: Format check
+        run: npm run format
+
       - name: Unit Test
         run: npm run test:coverage -- --run
 
@@ -75,7 +78,10 @@ jobs:
         run: npm run lint
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: npm run type-check
+
+      - name: Format check
+        run: npm run format
 
       - name: Unit Test
         run: npm run test:coverage -- --run

@@ -56,7 +56,7 @@ describe('AuthService', () => {
 
   describe('Token generation', () => {
     it('should generate JWT token', () => {
-      const payload = { userId: 'user-123', role: 'user' };
+      const _payload = { userId: 'user-123', role: 'user' };
       const token = 'eyJhbGc...' + Math.random();
 
       expect(token).toBeDefined();

@@ -1,5 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Request, Response } from 'express';
+import { describe, it, expect } from 'vitest';
 
 describe('Auth Middleware', () => {
   describe('Token validation', () => {

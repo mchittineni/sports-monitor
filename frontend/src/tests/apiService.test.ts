@@ -5,28 +5,34 @@ import apiClient, {
   getCountryStats,
 } from '../services/api';
 
-vi.mock('axios', () => ({
-  default: {
+vi.mock('axios', () => {
+  // 1. Create the "instance" that .create() will return
+  const mockAxiosInstance = {
     get: vi.fn(() =>
       Promise.resolve({
         data: {
-          data: [
-            {
-              id: '1',
-              sport: 'football',
-              homeTeam: 'France',
-            },
-          ],
+          data: [{ id: '1', sport: 'football', homeTeam: 'France' }],
         },
       })
     ),
-    post: vi.fn(() =>
-      Promise.resolve({
-        data: { success: true },
-      })
-    ),
-  },
-}));
+    post: vi.fn(() => Promise.resolve({ data: { success: true } })),
+    create: vi.fn().mockReturnThis(), // In case someone calls .create() on the instance
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+
+  // 2. Return the main axios object
+  return {
+    default: {
+      ...mockAxiosInstance,
+      create: vi.fn(() => mockAxiosInstance),
+    },
+    // Adding it here as well handles different import styles
+    create: vi.fn(() => mockAxiosInstance),
+  };
+});
 
 describe('API Service', () => {
   beforeEach(() => {

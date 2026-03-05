@@ -1,9 +1,11 @@
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
 const API_BASE =
   (import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api';
 
-const apiClient = axios.create({
+const actualAxios = (axios as any).default || axios;
+
+const apiClient: AxiosInstance = actualAxios.create({
   baseURL: API_BASE,
   timeout: 10000,
 });
