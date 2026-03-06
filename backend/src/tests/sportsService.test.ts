@@ -1,51 +1,78 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../database/connection', () => ({
-  query: vi.fn(),
+vi.mock('../utils/redisClient.js', () => ({
+  getCache: vi.fn(),
 }));
 
-vi.mock('../database/dynamodb', () => ({
-  createSportEvent: vi.fn(),
-  getSportEvent: vi.fn(),
-  getCountryEvents: vi.fn(),
-}));
+import { getSportsByCountry, getLiveEvents } from '../services/sportsService';
+import { getCache } from '../utils/redisClient.js';
 
-describe('SportsService', () => {
+describe('sportsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Sport Data Processing', () => {
-    it('should handle sport event data', () => {
-      const mockEvent = {
-        id: '1',
-        country: 'USA',
-        sport: 'Football',
-        homeTeam: 'Kansas City Chiefs',
-        awayTeam: 'Buffalo Bills',
-        score: '21-17',
-        status: 'live',
-        timestamp: Date.now(),
-      };
-      expect(mockEvent).toHaveProperty('sport');
-      expect(mockEvent.sport).toBe('Football');
+  describe('getSportsByCountry', () => {
+    it('should return cached events for a country', async () => {
+      const events = [{ id: '1', sport: 'Football', country: 'USA' }];
+      (getCache as ReturnType<typeof vi.fn>).mockResolvedValue(events);
+
+      const result = await getSportsByCountry('USA');
+
+      expect(getCache).toHaveBeenCalledWith('sports_by_country:usa');
+      expect(result).toEqual(events);
     });
 
-    it('should validate team information', () => {
-      const mockEvent = {
-        homeTeam: 'Manchester United',
-        awayTeam: 'Liverpool',
-        score: '2-1',
-      };
-      expect(mockEvent.homeTeam).toBeDefined();
-      expect(mockEvent.awayTeam).toBeDefined();
+    it('should lowercase the country name when building the cache key', async () => {
+      (getCache as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      await getSportsByCountry('ENGLAND');
+
+      expect(getCache).toHaveBeenCalledWith('sports_by_country:england');
     });
 
-    it('should handle different sports types', () => {
-      const sports = ['Football', 'Cricket', 'Basketball'];
-      expect(sports).toContain('Football');
-      expect(sports).toContain('Cricket');
-      expect(sports.length).toBe(3);
+    it('should return an empty array on cache miss', async () => {
+      (getCache as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      const result = await getSportsByCountry('France');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return an empty array when Redis throws', async () => {
+      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Redis down'));
+
+      const result = await getSportsByCountry('Spain');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getLiveEvents', () => {
+    it('should return cached live events', async () => {
+      const events = [{ id: '1', sport: 'Cricket' }];
+      (getCache as ReturnType<typeof vi.fn>).mockResolvedValue(events);
+
+      const result = await getLiveEvents();
+
+      expect(getCache).toHaveBeenCalledWith('sports_live_events');
+      expect(result).toEqual(events);
+    });
+
+    it('should return an empty array on cache miss', async () => {
+      (getCache as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+      const result = await getLiveEvents();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return an empty array when Redis throws', async () => {
+      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Redis down'));
+
+      const result = await getLiveEvents();
+
+      expect(result).toEqual([]);
     });
   });
 });
