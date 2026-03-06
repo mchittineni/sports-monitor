@@ -1,0 +1,89 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_ENV: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm ci && npm run build
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync frontend/dist s3://sports-monitor-frontend-${TF_ENV} --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+            --stack-name sports-monitor-${TF_ENV}-frontend \
+            --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontDistributionId`].OutputValue' \
+            --output text || aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'sports-monitor')]].Id" --output text | awk '{print $1}')
+          
+          # Fallback to terraform output if needed, but since we don't run terraform here, 
+          # we have to use AWS CLI to find the distribution
+          if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" == "None" ]; then
+            # Get the bucket name which we know
+            BUCKET_NAME="sports-monitor-frontend-${TF_ENV}"
+            
+            # Find the CloudFront distribution that points to this bucket
+            DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+              --query "DistributionList.Items[?Origins.Items[?DomainName=='$BUCKET_NAME.s3.amazonaws.com' || DomainName=='$BUCKET_NAME.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com' || contains(DomainName, '$BUCKET_NAME.s3')]].Id" \
+              --output text | awk '{print $1}')
+          fi
+
+          if [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "None" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id $DISTRIBUTION_ID \
+              --paths '/*'
+          else
+            echo "Warning: Could not find CloudFront distribution ID to invalidate."
+          fi

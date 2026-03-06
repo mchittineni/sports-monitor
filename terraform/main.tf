@@ -173,6 +173,13 @@ module "ai_services" {
   lambda_role_arn = module.lambda_api.lambda_role_arn
 }
 
+# ECR Container Registry
+module "ecr" {
+  source = "./modules/ecr"
+
+  environment = var.environment
+}
+
 # S3 for Frontend Hosting
 module "frontend" {
   source = "./modules/frontend"

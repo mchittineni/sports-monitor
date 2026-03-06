@@ -2,11 +2,16 @@
 process.env.NODE_ENV = 'test';
 
 import request from 'supertest';
-import app from '../index';
 import { beforeAll } from 'vitest';
 
-// no-op beforeAll
-beforeAll(() => {});
+let app: any;
+
+// Lazy-load the app so that vi.mock() calls in test files are registered
+// before any modules (cacheHandler, sportsService, etc.) are loaded.
+beforeAll(async () => {
+  const { default: appInstance } = await import('../index');
+  app = appInstance;
+});
 
 // export a helper for tests to use
 export const api = () => request(app);

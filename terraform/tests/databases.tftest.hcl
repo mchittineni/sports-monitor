@@ -10,6 +10,7 @@ run "execute_databases_plan" {
   variables {
     environment = "test"
     vpc_id      = "vpc-12345678"
+    subnet_ids  = ["subnet-11111111", "subnet-22222222"]
     db_name     = "sports_db_test"
     db_username = "postgres"
     db_password = "supersecretpassword123"
