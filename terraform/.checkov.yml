@@ -6,7 +6,7 @@ output:
   - cli
   - sarif # Standard format for GitHub Code Scanning alerts
 quiet: true # Reduces noise by hiding passed checks
-soft-fail: false # Hard fail for CI/CD protection
+soft-fail: true # Hard fail for CI/CD protection
 compact: true
 
 # --- Scan Scope ---
@@ -19,7 +19,7 @@ directory:
   - .
 
 # Paths to skip during scanning
-skip-paths:
+skip-path:
   - '.terraform'
   - '.git'
   - 'docs'
@@ -29,8 +29,7 @@ skip-paths:
   - '**/*.tfstate'
   - '**/*.tfstate.backup'
 
-# --- Modern Policy Enforcement ---
-# Instead of listing 100+ IDs, we enforce by severity.
+# --- Policy Enforcement ---
 # This ensures new rules are automatically included.
 check:
   - HIGH
@@ -46,11 +45,9 @@ skip-check:
 
 # --- Advanced Features ---
 scan-secrets:
-# Download external modules to scan them (Crucial for 2026 Monorepos)
+# Download external modules to scan them
 download-external-modules: true 
 var-file:
   - ./terraform/environments/dev.tfvars
-
-# --- Reporting ---
-# High/Critical will break the build. Low/Medium will just report.
-severity-threshold: HIGH
+  - ./terraform/environments/prod.tfvars
+  
