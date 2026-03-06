@@ -45,7 +45,7 @@ skip-check:
   - CKV2_AWS_6  # Example: Skip check for public S3 buckets if specifically intended
 
 # --- Advanced Features ---
-scan-secrets: true
+scan-secrets:
 # Download external modules to scan them (Crucial for 2026 Monorepos)
 download-external-modules: true 
 var-file:
