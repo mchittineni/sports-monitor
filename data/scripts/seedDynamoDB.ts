@@ -1,12 +1,14 @@
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { v4 as uuid } from 'uuid'
+import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { v4 as uuid } from 'uuid';
 
-const client = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
-const docClient = DynamoDBDocumentClient.from(client)
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+});
+const docClient = DynamoDBDocumentClient.from(client);
 
 const seedDynamoDB = async () => {
-  console.log('🌱 Seeding DynamoDB with live sports events...')
+  console.log('🌱 Seeding DynamoDB with live sports events...');
 
   try {
     const events = [
@@ -26,7 +28,7 @@ const seedDynamoDB = async () => {
         date: new Date().toISOString(),
         minute: 45,
         lastEvent: 'Boundary by Virat Kohli',
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // 30 days TTL
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days TTL
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -42,7 +44,7 @@ const seedDynamoDB = async () => {
         venue: 'Maracanã Stadium, Rio de Janeiro',
         league: 'Copa América',
         date: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -58,7 +60,7 @@ const seedDynamoDB = async () => {
         venue: 'Wembley Stadium, London',
         league: 'UEFA Euro',
         date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -74,7 +76,7 @@ const seedDynamoDB = async () => {
         venue: 'Crypto.com Arena, Los Angeles',
         league: 'Olympic Games',
         date: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -92,7 +94,7 @@ const seedDynamoDB = async () => {
         date: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         minute: 32,
         lastEvent: 'Shot by Manuel Neuer (saved)',
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -110,7 +112,7 @@ const seedDynamoDB = async () => {
         date: new Date().toISOString(),
         minute: 87,
         lastEvent: 'Wide ball by Haris Rauf',
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       {
         pk: `EVENT#${uuid()}`,
@@ -126,25 +128,25 @@ const seedDynamoDB = async () => {
         venue: 'Wimbledon Championships, London',
         league: 'Grand Slam',
         date: new Date().toISOString(),
-        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
-      }
-    ]
+        ttl: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      },
+    ];
 
     for (const event of events) {
       await docClient.send(
         new PutCommand({
           TableName: process.env.EVENTS_TABLE || 'SportsEvents',
-          Item: event
+          Item: event,
         })
-      )
+      );
     }
 
-    console.log(`✅ Created ${events.length} live events in DynamoDB`)
-    return events.length
+    console.log(`✅ Created ${events.length} live events in DynamoDB`);
+    return events.length;
   } catch (error) {
-    console.error('❌ DynamoDB seeding failed:', error)
-    throw error
+    console.error('❌ DynamoDB seeding failed:', error);
+    throw error;
   }
-}
+};
 
-export default seedDynamoDB
+export default seedDynamoDB;

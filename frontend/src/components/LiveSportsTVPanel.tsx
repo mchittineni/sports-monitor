@@ -20,7 +20,12 @@ const SPORTS_CHANNELS = [
     handle: '@nbcsports',
     fallbackVideoId: 'S-7G88Iqg2c',
   },
-  { id: 'espn', name: 'ESPN', handle: '@espn', fallbackVideoId: 'uJjYp1A_Nl4' },
+  {
+    id: 'espn',
+    name: 'ESPN',
+    handle: '@espn',
+    fallbackVideoId: 'uJjYp1A_Nl4',
+  },
 ];
 
 export default function LiveSportsTVPanel() {
