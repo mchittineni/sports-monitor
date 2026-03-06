@@ -9,7 +9,10 @@ export const terraformInit = async (dir: string) => {
   return result;
 };
 
-export const terraformPlan = async (dir: string, vars: Record<string, string> = {}) => {
+export const terraformPlan = async (
+  dir: string,
+  vars: Record<string, string> = {}
+) => {
   const args = ['plan'];
   for (const [key, value] of Object.entries(vars)) {
     args.push(`-var=${key}=${value}`);
@@ -19,6 +22,8 @@ export const terraformPlan = async (dir: string, vars: Record<string, string> = 
 };
 
 export const terraformValidate = async (dir: string) => {
-  const result = await execFileAsync(terraformBin, ['validate', '-json'], { cwd: dir });
+  const result = await execFileAsync(terraformBin, ['validate', '-json'], {
+    cwd: dir,
+  });
   return JSON.parse(result.stdout);
 };

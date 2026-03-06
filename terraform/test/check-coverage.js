@@ -7,15 +7,16 @@ const testsDir = path.join(terraformDir, 'tests');
 
 function checkTestCoverage() {
   console.log('--- Terraform Module Test Coverage Check ---');
-  
+
   if (!fs.existsSync(modulesDir)) {
     console.error(`Modules directory not found at ${modulesDir}`);
     return;
   }
-  
-  const modules = fs.readdirSync(modulesDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
+
+  const modules = fs
+    .readdirSync(modulesDir, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => dirent.name);
 
   if (modules.length === 0) {
     console.log('No modules found to test.');
@@ -36,14 +37,16 @@ function checkTestCoverage() {
 
   const coverage = (foundTests.length / modules.length) * 100;
 
-  console.log(`\nCoverage: ${coverage.toFixed(2)}% (${foundTests.length}/${modules.length} modules have tests)`);
-  
+  console.log(
+    `\nCoverage: ${coverage.toFixed(2)}% (${foundTests.length}/${modules.length} modules have tests)`
+  );
+
   console.log('\nVerified Modules:');
-  foundTests.forEach(m => console.log(`  ✅ ${m}`));
+  foundTests.forEach((m) => console.log(`  ✅ ${m}`));
 
   if (missingTests.length > 0) {
     console.log('\nModules Missing Tests:');
-    missingTests.forEach(m => console.log(`  ❌ ${m}`));
+    missingTests.forEach((m) => console.log(`  ❌ ${m}`));
     process.exit(1);
   } else {
     console.log('\nAll modules have associated .tftest.hcl files! 🎉');
