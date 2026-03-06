@@ -2,7 +2,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
-const terraformBin = 'C:\\ProgramData\\chocolatey\\bin\\terraform.exe';
+const terraformBin = 'terraform';
 
 export const terraformInit = async (dir: string) => {
   const result = await execFileAsync(terraformBin, ['init'], { cwd: dir });
