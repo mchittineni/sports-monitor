@@ -8,10 +8,10 @@ import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
-// Strict rate limit for expensive AI endpoints
+// Strict rate limit for expensive Bedrock AI endpoints (10 req / 15 min per IP).
 const aiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -22,7 +22,8 @@ const aiLimiter = rateLimit({
 // Apply limiter to all AI routes
 router.use(aiLimiter);
 
-// Chat endpoint
+// Single-turn or multi-turn chat via AWS Bedrock.
+// Conversation history must be supplied by the caller; this endpoint is stateless.
 router.post('/chat', async (req: Request, res: Response) => {
   try {
     const { message, context } = req.body;
@@ -39,7 +40,7 @@ router.post('/chat', async (req: Request, res: Response) => {
   }
 });
 
-// Generate match summary
+// Generate a short, enthusiastic match summary using Claude 3 Sonnet via Bedrock.
 router.post('/summarize-match', async (req: Request, res: Response) => {
   try {
     const { match } = req.body;
@@ -56,7 +57,7 @@ router.post('/summarize-match', async (req: Request, res: Response) => {
   }
 });
 
-// Get match prediction
+// Retrieve an AI prediction for a match. Currently a stub — Amazon Forecast integration pending.
 router.get('/prediction/:matchId', async (req: Request, res: Response) => {
   try {
     const { matchId } = req.params;

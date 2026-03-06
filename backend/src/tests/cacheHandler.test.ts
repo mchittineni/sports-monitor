@@ -33,7 +33,9 @@ describe('cacheResponse middleware', () => {
   });
 
   it('should return cached data immediately on cache hit', async () => {
-    (getCache as ReturnType<typeof vi.fn>).mockResolvedValue({ events: [1, 2] });
+    (getCache as ReturnType<typeof vi.fn>).mockResolvedValue({
+      events: [1, 2],
+    });
     const { req, res, next } = makeMocks();
     await cacheResponse(60)(req, res, next);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -42,10 +44,15 @@ describe('cacheResponse middleware', () => {
   });
 
   it('should set Cache-Control header on cache hit', async () => {
-    (getCache as ReturnType<typeof vi.fn>).mockResolvedValue({ data: 'cached' });
+    (getCache as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: 'cached',
+    });
     const { req, res, next } = makeMocks();
     await cacheResponse(120)(req, res, next);
-    expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, max-age=120');
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Cache-Control',
+      'public, max-age=120'
+    );
   });
 
   it('should call next() on cache miss and wrap res.json', async () => {
@@ -76,7 +83,9 @@ describe('cacheResponse middleware', () => {
   });
 
   it('should call next() on Redis error (graceful degradation)', async () => {
-    (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Redis down'));
+    (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('Redis down')
+    );
     const { req, res, next } = makeMocks();
     await cacheResponse(60)(req, res, next);
     expect(next).toHaveBeenCalled();

@@ -62,9 +62,9 @@ describe('ingestSports worker', () => {
     await handler();
     const after = Date.now();
 
-    const liveEventsCall = (setCache as ReturnType<typeof vi.fn>).mock.calls.find(
-      (c: unknown[]) => c[0] === 'sports_live_events'
-    );
+    const liveEventsCall = (
+      setCache as ReturnType<typeof vi.fn>
+    ).mock.calls.find((c: unknown[]) => c[0] === 'sports_live_events');
     const events = liveEventsCall![1] as Array<{ timestamp: number }>;
 
     events.forEach((e) => {

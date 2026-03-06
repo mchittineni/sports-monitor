@@ -40,7 +40,9 @@ describe('sportsService', () => {
     });
 
     it('should return an empty array when Redis throws', async () => {
-      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Redis down'));
+      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error('Redis down')
+      );
 
       const result = await getSportsByCountry('Spain');
 
@@ -68,7 +70,9 @@ describe('sportsService', () => {
     });
 
     it('should return an empty array when Redis throws', async () => {
-      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Redis down'));
+      (getCache as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error('Redis down')
+      );
 
       const result = await getLiveEvents();
 

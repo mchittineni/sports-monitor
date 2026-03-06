@@ -60,9 +60,9 @@ resource "aws_db_instance" "postgres" {
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
-  backup_retention_period   = var.environment == "prod" ? 30 : 7
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "sun:04:00-sun:05:00"
+  backup_retention_period = var.environment == "prod" ? 30 : 7
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = "sports-monitor-${var.environment}-final-snapshot"
