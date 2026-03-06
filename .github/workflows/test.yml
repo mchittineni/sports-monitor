@@ -210,7 +210,6 @@ jobs:
       - name: Run Native Terraform Tests
         run: |
           terraform init -backend=false
-          terraform test -run=integration -coverprofile=coverage.out
-          go tool cover -func=coverage.out | grep total | awk '{print $3}'
+          terraform test
         env:
           AWS_REGION: us-east-1
