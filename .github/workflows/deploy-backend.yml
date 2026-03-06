@@ -1,16 +1,32 @@
-name: Build & Push Docker Images
+name: Deploy Backend
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: deploy-backend-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TF_ENV: ${{ github.event.inputs.environment || 'dev' }}
+
 jobs:
-  build:
+  build-and-deploy-backend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,45 +36,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          load: true
-          tags: sports-monitor-frontend:${{ github.sha }}
-
-      - name: Scan frontend image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: "sports-monitor-frontend:${{ github.sha }}"
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-
-      - name: Push frontend image
-        run: |
-          docker tag sports-monitor-frontend:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/sports-monitor-frontend:latest
-          docker tag sports-monitor-frontend:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/sports-monitor-frontend:${{ github.sha }}
-          docker push ${{ steps.login-ecr.outputs.registry }}/sports-monitor-frontend:latest
-          docker push ${{ steps.login-ecr.outputs.registry }}/sports-monitor-frontend:${{ github.sha }}
 
       - name: Build backend image
         uses: docker/build-push-action@v6
@@ -84,5 +76,27 @@ jobs:
           docker push ${{ steps.login-ecr.outputs.registry }}/sports-monitor-backend:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/sports-monitor-backend:${{ github.sha }}
 
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Deploy Lambda from ECR
+        run: |
+          aws lambda update-function-code \
+            --function-name sports-monitor-api-${TF_ENV} \
+            --image-uri ${{ steps.login-ecr.outputs.registry }}/sports-monitor-backend:${{ github.sha }}
+
+      - name: Wait for deployment
+        run: |
+          aws lambda wait function-updated \
+            --function-name sports-monitor-api-${TF_ENV}
+
+      - name: Get API URL
+        id: api-url
+        run: |
+          API_ID=$(aws apigatewayv2 get-apis --query 'Items[?Name==`sports-monitor-api-${{ env.TF_ENV }}`].ApiId' --output text)
+          echo "url=https://$API_ID.execute-api.${{ secrets.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Run smoke tests
+        run: |
+          HEALTH_CHECK=$(curl -s ${{ steps.api-url.outputs.url }}/health)
+          if [ "$(echo $HEALTH_CHECK | jq -r .status)" != "ok" ]; then
+            echo "Health check failed!"
+            exit 1
+          fi

@@ -21,8 +21,10 @@ availability_zones = [
 db_name = "sports_monitor"
 
 # SENSITIVE — supply via CI/CD secrets or a secrets manager, not plain text
-db_username = "sports_admin"
-db_password = "change-me-before-use-min16chars!"
+# The following are typically passed via environment variables in CI/CD (TF_VAR_db_username)
+# But we include dummy values here so local `terraform plan` or `checkov` works without warnings
+db_username = "dummy_user"
+db_password = "dummy_password_123!"
 
 # ── Monitoring ────────────────────────────────────────────────────────────────
 alarm_email = "ops-team@example.com"

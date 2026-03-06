@@ -37,11 +37,18 @@ vi.mock('../services/authService', () => {
   };
 });
 
-// bypass real JWT authentication; always attach user from our in-memory store
+// bypass real JWT authentication; validate mock token and attach user from in-memory store
 vi.mock('../middleware/auth', () => {
   return {
     authMiddleware: (req: any, res: any, next: any) => {
-      // use first user if present
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const token = authHeader.slice(7);
+      if (token !== 'access-token') {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
       const first = Object.values(users)[0];
       if (first) {
         req.user = { userId: first.id };

@@ -137,6 +137,11 @@ jobs:
           output_format: sarif
           output_file_path: ./checkov.sarif
           soft_fail: true
+        env:
+          TF_VAR_environment: test
+          TF_VAR_db_username: dummyuser
+          TF_VAR_db_password: dummypassword
+          TF_VAR_alarm_email: dummy@example.com
 
       - name: Upload Security Results to GitHub
         uses: github/codeql-action/upload-sarif@v4
