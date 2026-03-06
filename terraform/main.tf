@@ -126,24 +126,39 @@ module "api_gateway" {
   source = "./modules/api-gateway"
 
   environment       = var.environment
-  lambda_invoke_arn = module.lambda.api_handler_invoke_arn
+  lambda_invoke_arn = module.lambda_api.api_handler_invoke_arn
   # Override this per environment if you want stricter CORS
   # (for example, to only allow your production frontend domain).
   # allowed_origins = ["https://your-frontend.example.com"]
 }
 
-# Lambda Functions
-module "lambda" {
+# Main Express API Lambda
+module "lambda_api" {
   source = "./modules/lambda"
 
   environment    = var.environment
   vpc_id         = module.networking.vpc_id
-  function_name  = "sports-monitor-api"
-  handler        = "dist/index.handler"
-  runtime        = "nodejs18.x"
+  function_name  = "sports-monitor-api-${var.environment}"
+  handler        = "dist/lambda.handler" # Updated to new API entrypoint
+  runtime        = "nodejs20.x"
   db_host        = module.databases.db_endpoint
   db_name        = var.db_name
   dynamodb_table = aws_dynamodb_table.sports_events.name
+}
+
+# CRON Background Data Ingestion Lambda
+module "lambda_ingest_worker" {
+  source = "./modules/lambda"
+
+  environment         = var.environment
+  vpc_id              = module.networking.vpc_id
+  function_name       = "sports-monitor-ingest-worker-${var.environment}"
+  handler             = "dist/workers/ingestSports.handler"
+  runtime             = "nodejs20.x"
+  db_host             = module.databases.db_endpoint
+  db_name             = var.db_name
+  dynamodb_table      = aws_dynamodb_table.sports_events.name
+  schedule_expression = "rate(5 minutes)" # Wires up EventBridge automatically
 }
 
 # AI Services (AWS Bedrock)
@@ -152,7 +167,7 @@ module "ai_services" {
 
   environment     = var.environment
   vpc_id          = module.networking.vpc_id
-  lambda_role_arn = module.lambda.lambda_role_arn
+  lambda_role_arn = module.lambda_api.lambda_role_arn
 }
 
 # S3 for Frontend Hosting

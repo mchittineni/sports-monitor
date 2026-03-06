@@ -4,8 +4,23 @@ import {
   generateMatchSummary,
   getPrediction,
 } from '../../services/aiService.js';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
+
+// Strict rate limit for expensive AI endpoints
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many AI requests. Please try again later in 15 minutes.',
+  },
+});
+
+// Apply limiter to all AI routes
+router.use(aiLimiter);
 
 // Chat endpoint
 router.post('/chat', async (req: Request, res: Response) => {

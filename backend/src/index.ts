@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
@@ -55,6 +56,7 @@ app.use(
 
 // Apply rate limiting to all API routes
 app.use('/api', apiLimiter);
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

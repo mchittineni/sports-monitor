@@ -127,3 +127,34 @@ output "api_handler_invoke_arn" {
   value       = aws_lambda_function.api_handler.invoke_arn
   description = "The ARN used by API Gateway to grant permission to invoke the Lambda function."
 }
+
+# --- EventBridge CRON Support --- #
+
+variable "schedule_expression" {
+  type        = string
+  description = "Optional EventBridge schedule expression (e.g., 'rate(5 minutes)'). If provided, it creates a CRON trigger for this Lambda."
+  default     = ""
+}
+
+resource "aws_cloudwatch_event_rule" "lambda_cron" {
+  count               = var.schedule_expression != "" ? 1 : 0
+  name                = "${var.function_name}-cron"
+  description         = "Triggers ${var.function_name} based on schedule"
+  schedule_expression = var.schedule_expression
+}
+
+resource "aws_cloudwatch_event_target" "lambda_cron_target" {
+  count     = var.schedule_expression != "" ? 1 : 0
+  rule      = aws_cloudwatch_event_rule.lambda_cron[0].name
+  target_id = "TriggerLambda"
+  arn       = aws_lambda_function.api_handler.arn
+}
+
+resource "aws_lambda_permission" "allow_eventbridge" {
+  count         = var.schedule_expression != "" ? 1 : 0
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api_handler.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.lambda_cron[0].arn
+}
