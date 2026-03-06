@@ -39,9 +39,7 @@ export default function MatchCard({ match }: MatchCardProps) {
           {match.sport}
         </span>
         <span
-          className={`text-xs font-bold px-2 py-1 rounded text-white ${
-            statusColors[match.status]
-          }`}
+          className={`text-xs font-bold px-2 py-1 rounded text-white ${statusColors[match.status]}`}
         >
           {match.status.toUpperCase()}
         </span>
