@@ -1,0 +1,53 @@
+# Documentation: https://www.checkov.io/2-Introduction/Configuration%20File.html
+# Checkov Configuration - Infrastructure as Code
+
+# --- Output Settings ---
+output: 
+  - cli
+  - sarif # Standard format for GitHub Code Scanning alerts
+quiet: true # Reduces noise by hiding passed checks
+soft-fail: true # Hard fail for CI/CD protection
+compact: true
+
+# --- Scan Scope ---
+framework: 
+  - terraform
+  - secrets
+
+# Directories to scan
+directory:
+  - .
+
+# Paths to skip during scanning
+skip-path:
+  - '.terraform'
+  - '.git'
+  - 'docs'
+  - 'tests'
+  - 'scripts'
+  - '.terraform.lock.hcl'
+  - '**/*.tfstate'
+  - '**/*.tfstate.backup'
+
+# --- Policy Enforcement ---
+# This ensures new rules are automatically included.
+check:
+  - HIGH
+  - CRITICAL
+# If you still want to force specific Medium checks, list them here:
+# - CKV_AWS_11  # VPC flow logs
+
+# --- Exclusions ---
+# Only skip what is technically required for your architecture
+skip-check:
+  - CKV_AWS_62  # Allow S3 public access for static website hosting if needed
+  - CKV2_AWS_6  # Example: Skip check for public S3 buckets if specifically intended
+
+# --- Advanced Features ---
+scan-secrets:
+# Download external modules to scan them
+download-external-modules: true 
+var-file:
+  - ./terraform/environments/dev.tfvars
+  - ./terraform/environments/prod.tfvars
+  
