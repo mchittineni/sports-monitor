@@ -1,19 +1,19 @@
 {
-  "name": "test",
+  "name": "terraform-tests",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "test:coverage": "node check-coverage.js"
+    "test:coverage": "node check-coverage.js",
+    "format": "prettier --write \"**/*.{tf,ts,tsx,js,jsx,json,md}\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "jest": "^30.2.0",
+    "prettier": "^3.0.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }

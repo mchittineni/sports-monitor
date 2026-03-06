@@ -6,7 +6,9 @@ describe('Terraform Module: Lambda', () => {
 
   it('should initialize successfully', async () => {
     const result = await terraformInit(modulePath);
-    expect(result.stdout).toContain('Terraform has been successfully initialized!');
+    expect(result.stdout).toContain(
+      'Terraform has been successfully initialized!'
+    );
   }, 120000);
 
   it('should validate correctly', async () => {
