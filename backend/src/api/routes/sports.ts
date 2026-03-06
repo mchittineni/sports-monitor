@@ -7,7 +7,9 @@ import { cacheResponse } from '../middleware/cacheHandler.js';
 
 const router = express.Router();
 
-// Get sports events by country (cache for 60 seconds)
+// Get sports events by country.
+// Reads from Redis key sports_by_country:<country> populated by the ingest CRON worker.
+// Edge-cached for 60 s via cacheResponse middleware.
 router.get(
   '/by-country',
   cacheResponse(60),
@@ -27,7 +29,9 @@ router.get(
   }
 );
 
-// Get all live events (cache for 30 seconds since they are live)
+// Get all live events.
+// Reads from Redis key sports_live_events populated by the ingest CRON worker.
+// Shorter 30 s cache to reflect near-real-time update frequency.
 router.get('/live', cacheResponse(30), async (req: Request, res: Response) => {
   try {
     const events = await getLiveEvents();
@@ -38,7 +42,8 @@ router.get('/live', cacheResponse(30), async (req: Request, res: Response) => {
   }
 });
 
-// Get events by sport type (cache for 60 seconds)
+// Filter live events by sport type (football, cricket, basketball, etc.).
+// Delegates to getLiveEvents then filters in memory; cached for 60 s.
 router.get(
   '/by-sport/:sport',
   cacheResponse(60),

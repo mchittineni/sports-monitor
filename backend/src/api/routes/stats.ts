@@ -3,7 +3,43 @@ import { cacheResponse } from '../middleware/cacheHandler.js';
 
 const router = express.Router();
 
-// Get country statistics (Cache for 5 minutes)
+/**
+ * @swagger
+ * /stats/{countryCode}:
+ *   get:
+ *     summary: Get statistics for a specific country
+ *     tags: [Stats]
+ *     parameters:
+ *       - in: path
+ *         name: countryCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ISO country code or country name slug (e.g. "usa", "england")
+ *     responses:
+ *       200:
+ *         description: Country statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 countryCode:
+ *                   type: string
+ *                 totalEvents:
+ *                   type: integer
+ *                 activeSports:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 recentMatches:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Failed to fetch statistics
+ */
+// Get country statistics — cached for 5 minutes
 router.get(
   '/:countryCode',
   cacheResponse(300),
@@ -27,7 +63,28 @@ router.get(
   }
 );
 
-// Get global heatmap data (Cache for 5 minutes)
+/**
+ * @swagger
+ * /stats/heatmap/global:
+ *   get:
+ *     summary: Get global sports activity heatmap data
+ *     tags: [Stats]
+ *     responses:
+ *       200:
+ *         description: Heatmap data array
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Failed to generate heatmap
+ */
+// Get global heatmap data — cached for 5 minutes
 router.get(
   '/heatmap/global',
   cacheResponse(300),

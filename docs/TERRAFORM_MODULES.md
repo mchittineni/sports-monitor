@@ -1,80 +1,191 @@
 # Terraform Modules Guide
 
-This project leverages **Terraform** to manage its cloud infrastructure on AWS. To keep the infrastructure maintainable, scalable, and secure, the configuration is heavily modularized.
+All AWS infrastructure is managed through Terraform modules in `terraform/modules/`. Every module follows a strict three-file layout and is covered by automated tests in `terraform/test/`.
+
+---
+
+## Module File Structure (Required)
+
+Every module **must** contain exactly these three files — no exceptions:
+
+| File | Purpose |
+|---|---|
+| `variables.tf` | All `variable` declarations (type, description, default) |
+| `main.tf` | All `resource` and `data` blocks |
+| `outputs.tf` | All `output` value declarations |
+
+Inline variable or output blocks inside `main.tf` are not permitted. This enforces consistent discoverability across the codebase.
+
+---
 
 ## Existing Modules
 
-The `terraform/modules/` directory contains the building blocks for our infrastructure:
+### `networking`
 
-- **`networking`**: Provisions the Virtual Private Cloud (VPC), subnets, Internet Gateways, and routing tables. Now securely configured with VPC Flow Logs.
-- **`databases`**: Responsible for the underlying Relational Database Service (RDS) running PostgreSQL. Enforces encryption, blocks public Internet access, and enforces IAM Database Authentication.
-- **`lambda`**: Packages and deploys the Node.js API code as a serverless function with an injected DynamoDB and database configuration. Handles all execution IAM roles and AWS X-Ray generic tracing configurations.
-- **`api-gateway`**: Connects traffic from the open Internet to the Lambda functions. Configures default API routing, payload formatting, CORS restrictions, and robust CloudWatch Access Logging.
-- **`frontend`**: Provisions the AWS S3 buckets and CloudFront distribution for the static React application.
-- **`ai-services`**: Wires up permissions and hooks to AWS Bedrock to permit Claude 3 processing.
-- **`monitoring`**: Handles dedicated CloudWatch Alarms and logs filtering for error states.
+Provisions the VPC, public and private subnets, Internet Gateway, **NAT Gateway** (single instance in the first public subnet for cost efficiency), and route tables.
 
-## How to Create a New Terraform Module
+Key resources:
+- `aws_vpc` — 10.0.0.0/16 with DNS support
+- `aws_subnet` (public × 3, private × 3) across availability zones
+- `aws_internet_gateway` — for public subnet egress
+- `aws_eip` + `aws_nat_gateway` — for private subnet egress (Bedrock, external APIs)
+- `aws_route_table` + `aws_route_table_association` — separate tables for public and private subnets
 
-If you need to define a new architectural component (e.g., an SQS Queue for background job processing), you should create a new module.
+Outputs: `vpc_id`, `public_subnet_ids`, `private_subnet_ids`
 
-### Step-by-step Process:
+---
 
-1. **Create the Folder Structure**:
-   Create a new directory inside `terraform/modules/`.
+### `databases`
 
+Provisions **RDS PostgreSQL** (Multi-AZ) in private subnets.
+
+Key resources:
+- `aws_db_subnet_group` — places RDS in private subnets from the networking module
+- `aws_db_instance` — encrypted, no public access, `max_allocated_storage = 100` for autoscaling
+- `aws_security_group` — RDS SG allowing only Lambda SG on port 5432
+
+Inputs required: `vpc_id`, `subnet_ids` (private), `db_name`, `db_username`, `db_password`
+
+---
+
+### `lambda`
+
+Packages and deploys Lambda functions with **VPC placement** and correct IAM.
+
+Key resources:
+- `aws_iam_role` — with `Effect = "Allow"` (not `"Principal"`) in the assume role policy
+- `aws_iam_role_policy_attachment` — `AWSLambdaBasicExecutionRole` + `AWSLambdaVPCAccessExecutionRole`
+- `aws_security_group` — Lambda SG with controlled egress (HTTPS to Bedrock, Redis port to cache SG)
+- `aws_lambda_function` — VPC config with `subnet_ids` (private) and `security_group_ids`
+
+Inputs required: `vpc_id`, `subnet_ids`, `function_name`, `image_uri`, `environment_variables`
+
+---
+
+### `api-gateway`
+
+Connects the public internet to Lambda via **API Gateway v2 HTTP API**.
+
+Key resources:
+- `aws_apigatewayv2_api` — HTTP API with CORS and default route
+- `aws_apigatewayv2_integration` — Lambda proxy integration
+- `aws_apigatewayv2_stage` — `$default` stage with auto-deploy and CloudWatch access logging
+
+---
+
+### `frontend`
+
+Hosts the React SPA on **S3 + CloudFront** with fully private bucket access via OAC.
+
+Key resources:
+- `aws_s3_bucket` — private bucket (all `block_public_*` settings enabled)
+- `aws_cloudfront_origin_access_control` — `sigv4` signing, `always` signing behavior
+- `aws_s3_bucket_policy` — allows only `cloudfront.amazonaws.com` with `AWS:SourceArn` condition
+- `aws_cloudfront_distribution` — HTTPS-only, OAC origin, `PriceClass_100`
+
+> The S3 bucket does **not** use a public bucket policy. Access is exclusively through CloudFront OAC.
+
+---
+
+### `ai-services`
+
+Provisions IAM permissions for Lambda to call **AWS Bedrock** (Claude 3 Sonnet).
+
+Key resources:
+- `aws_iam_policy` — `bedrock:InvokeModel` on the Claude 3 Sonnet model ARN
+- `aws_iam_role_policy_attachment` — attaches the Bedrock policy to the Lambda execution role
+
+The model ID is configurable via `BEDROCK_MODEL_ID` environment variable (default: `anthropic.claude-3-sonnet-20240229`).
+
+---
+
+### `monitoring`
+
+Provisions **CloudWatch Alarms** and SNS notifications.
+
+Key resources:
+- `aws_kms_key` — KMS key for SNS topic encryption (created before the log group that references it)
+- `aws_sns_topic` — encrypted alert topic
+- `aws_sns_topic_subscription` — email subscription to `alarm_email`
+- `aws_cloudwatch_metric_alarm` — Lambda error rate, RDS CPU, ElastiCache memory
+
+---
+
+## Root `terraform/`
+
+The root module (`terraform/main.tf`) wires all child modules together and passes shared values (VPC ID, private subnet IDs, environment) between them.
+
+The root also contains `variables.tf` and `outputs.tf` at the top level — all variable and output blocks live there, not inline in `main.tf`.
+
+---
+
+## IaC Testing
+
+All modules are covered by automated tests in `terraform/test/`:
+
+| Test file | Module tested |
+|---|---|
+| `networking.test.ts` | `modules/networking` |
+| `databases.test.ts` | `modules/databases` |
+| `lambda.test.ts` | `modules/lambda` |
+| `api-gateway.test.ts` | `modules/api-gateway` |
+| `frontend.test.ts` | `modules/frontend` |
+| `ai-services.test.ts` | `modules/ai-services` |
+| `monitoring.test.ts` | `modules/monitoring` |
+| `main.test.ts` | root `terraform/` |
+
+Each test runs `terraformInit` then `terraformValidate` via the `tf-helpers` utility. All tests have a 120 s timeout to accommodate provider download time.
+
+Run the tests:
+```bash
+cd terraform/test && npm test
+```
+
+---
+
+## Creating a New Module
+
+1. **Create the directory and required files:**
    ```bash
    mkdir terraform/modules/sqs-jobs
+   touch terraform/modules/sqs-jobs/{variables.tf,main.tf,outputs.tf}
    ```
 
-2. **Define the Bare Minimum Files**:
-   Inside your new folder (`terraform/modules/sqs-jobs`), create **at least** a `main.tf` file. You may optionally split variables and outputs into `variables.tf` and `outputs.tf` for larger modules.
+2. **Declare all inputs in `variables.tf`**, all resources in `main.tf`, all outputs in `outputs.tf`.
 
-   _Example `terraform/modules/sqs-jobs/main.tf`:_
-
-   ```hcl
-   variable "environment" {
-     type = string
-   }
-
-   resource "aws_sqs_queue" "job_queue" {
-     name                      = "sports-monitor-jobs-${var.environment}"
-     kms_master_key_id         = "alias/aws/sqs"
-     sqs_managed_sse_enabled   = true
-   }
-
-   output "queue_url" {
-     value = aws_sqs_queue.job_queue.id
-   }
-   ```
-
-3. **Call the Module in the Root** (`terraform/main.tf`):
-   To use your newly created module, instantiate it in the root `main.tf` file and pass down the necessary variables.
-
+3. **Call the module in `terraform/main.tf`:**
    ```hcl
    module "sqs_jobs" {
-     source = "./modules/sqs-jobs"
-
+     source      = "./modules/sqs-jobs"
      environment = var.environment
    }
    ```
 
-4. **Verify Your Syntax**:
-   Before committing, initialize the dependencies and format your files.
-
+4. **Validate your changes:**
    ```bash
-   cd terraform/
+   cd terraform
    terraform init
    terraform fmt -recursive
    terraform validate
    ```
 
-5. **Write Terraform Tests**:
-   All modules MUST be covered by both Jest Integration Tests and Native Terraform Tests. If tests are omitted, the continuous integration pipelines will fail.
-   - Run Native Tests: `terraform test`
-   - Run Integration Tests (from `terraform/test`): `npm run test`
-   - Test Coverage Script: `npm run test:coverage` (validates 100% module `.tftest.hcl` coverage mapping)
+5. **Add a test file** in `terraform/test/<module-name>.test.ts` following the `lambda.test.ts` pattern.
 
-### Security Considerations for New Modules
+6. **Run Checkov before committing:**
+   ```bash
+   checkov -d terraform/ --config-file terraform/.checkov.yml
+   ```
+   All `HIGH` and `CRITICAL` findings must be resolved — they will block CI.
 
-Our CI/CD pipelines are rigidly monitored by `tfsec`. If your module provisions unencrypted data, opens wildcards (`*`) to the internet on `security_groups`, or provides overly permissive IAM roles, it will fail to deploy. Always refer to `tfsec` AWS rules before creating a module.
+---
+
+## Security Rules for New Modules
+
+The CI pipeline runs Checkov with `hard-fail-on: [HIGH, CRITICAL]`. Common failure patterns to avoid:
+
+- Unencrypted S3 buckets, RDS instances, or SQS queues
+- Security groups with `0.0.0.0/0` inbound rules
+- Overly permissive IAM policies (`Action: "*"` or `Resource: "*"`)
+- Public RDS instances (`publicly_accessible = true`)
+- Lambda functions without VPC placement (cannot reach private resources)
+- S3 buckets with public ACLs or missing `block_public_*` settings

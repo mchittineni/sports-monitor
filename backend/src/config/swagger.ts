@@ -136,15 +136,22 @@ const options = {
       },
       {
         name: 'Sports',
-        description: 'Sports events and matches',
+        description:
+          'Live sports events and matches — reads from Redis populated by the ingest CRON worker',
       },
       {
         name: 'AI',
-        description: 'AI-powered features',
+        description:
+          'AI-powered features via AWS Bedrock (Claude 3 Sonnet). Stateless per request; callers supply conversation history.',
       },
       {
         name: 'User',
         description: 'User profile and preferences',
+      },
+      {
+        name: 'Stats',
+        description:
+          'Country-level and global heatmap statistics. Responses are Redis-cached for 5 minutes.',
       },
     ],
   },
