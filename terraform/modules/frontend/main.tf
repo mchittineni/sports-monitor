@@ -1,13 +1,3 @@
-variable "environment" {
-  type        = string
-  description = "Execution environment name used for resource naming (e.g., dev, prod)."
-}
-
-variable "frontend_bucket_name" {
-  type        = string
-  description = "The exact, globally unique name for the S3 bucket hosting the static frontend assets."
-}
-
 # KMS Key for S3 encryption
 resource "aws_kms_key" "s3" {
   description             = "KMS key for S3 bucket encryption"
@@ -44,13 +34,6 @@ resource "aws_s3_bucket_versioning" "frontend" {
   }
 }
 
-resource "aws_s3_bucket_logging" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  target_bucket = aws_s3_bucket.frontend.id
-  target_prefix = "access-log/"
-}
-
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
@@ -60,18 +43,35 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_policy" "frontend_public" {
-  bucket = aws_s3_bucket.frontend.id
+# CloudFront Origin Access Control — restricts S3 access to CloudFront only
+resource "aws_cloudfront_origin_access_control" "frontend" {
+  name                              = "sports-monitor-oac-${var.environment}"
+  description                       = "OAC for sports monitor frontend S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+resource "aws_s3_bucket_policy" "frontend_oac" {
+  bucket     = aws_s3_bucket.frontend.id
+  depends_on = [aws_cloudfront_distribution.frontend]
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "PublicRead"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.frontend.arn}/*"
+        Sid    = "AllowCloudFrontOAC"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.frontend.arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.frontend.arn
+          }
+        }
       }
     ]
   })
@@ -121,8 +121,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   web_acl_id = aws_wafv2_web_acl.frontend.arn
 
   origin {
-    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_id   = "S3Frontend"
+    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
+    origin_id                = "S3Frontend"
+    origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
   default_cache_behavior {
@@ -160,9 +161,4 @@ resource "aws_cloudfront_distribution" "frontend" {
     cloudfront_default_certificate = true
     minimum_protocol_version       = "TLSv1.2_2021"
   }
-}
-
-output "cloudfront_domain_name" {
-  value       = aws_cloudfront_distribution.frontend.domain_name
-  description = "The generated CloudFront distribution domain name pointing to the frontend."
 }

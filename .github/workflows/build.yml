@@ -44,7 +44,7 @@ jobs:
           tags: sports-monitor-frontend:${{ github.sha }}
 
       - name: Scan frontend image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: "sports-monitor-frontend:${{ github.sha }}"
           format: "table"
@@ -68,7 +68,7 @@ jobs:
           tags: sports-monitor-backend:${{ github.sha }}
 
       - name: Scan backend image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: "sports-monitor-backend:${{ github.sha }}"
           format: "table"

@@ -1,8 +1,3 @@
-variable "environment" {
-  type        = string
-  description = "The deployment environment (e.g., dev, staging, prod) used for naming and tagging resources."
-}
-
 # KMS Key for CloudWatch logs
 resource "aws_kms_key" "logs" {
   description             = "KMS key for CloudWatch logs encryption"
@@ -13,17 +8,6 @@ resource "aws_kms_key" "logs" {
 resource "aws_kms_alias" "logs" {
   name          = "alias/sports-monitor-logs-${var.environment}"
   target_key_id = aws_kms_key.logs.key_id
-}
-
-variable "lambda_invoke_arn" {
-  type        = string
-  description = "The Amazon Resource Name (ARN) invoking the primary backend Lambda function."
-}
-
-variable "allowed_origins" {
-  type        = list(string)
-  description = "Allowed CORS origins for the API Gateway"
-  default     = ["*"]
 }
 
 # IAM Role for API Gateway CloudWatch Logging
@@ -114,9 +98,4 @@ resource "aws_apigatewayv2_stage" "main" {
       integrationErrorMessage = "$context.integrationErrorMessage"
     })
   }
-}
-
-output "api_endpoint" {
-  value       = aws_apigatewayv2_stage.main.invoke_url
-  description = "The fully qualified URL endpoint for the deployed API Gateway."
 }

@@ -1,43 +1,3 @@
-variable "environment" {
-  type        = string
-  description = "The deployment environment (e.g., dev, prod) to tag resources and configure env vars."
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "The ID of the VPC where the Lambda function will operate, allowing access to private resources like RDS."
-}
-
-variable "function_name" {
-  type        = string
-  description = "The logical name assigned to the deployed AWS Lambda function."
-}
-
-variable "handler" {
-  type        = string
-  description = "The code entrypoint for the Lambda function (e.g., dist/index.handler)."
-}
-
-variable "runtime" {
-  type        = string
-  description = "The Node.js runtime version required to execute the Lambda code."
-}
-
-variable "db_host" {
-  type        = string
-  description = "The host address for the PostgreSQL database passed via environment variables."
-}
-
-variable "db_name" {
-  type        = string
-  description = "The name of the connected PostgresSQL database."
-}
-
-variable "dynamodb_table" {
-  type        = string
-  description = "The name of the DynamoDB table used for live sports events."
-}
-
 # IAM role for Lambda
 resource "aws_iam_role" "lambda_role" {
   name = "${var.function_name}-role-${var.environment}"
@@ -46,7 +6,7 @@ resource "aws_iam_role" "lambda_role" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Principal"
+        Effect = "Allow"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -66,6 +26,29 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 resource "aws_iam_role_policy_attachment" "lambda_xray_execution" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
+# VPC access policy (required when Lambda runs inside a VPC)
+resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
+  count      = length(var.subnet_ids) > 0 ? 1 : 0
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+# Security group for Lambda when deployed in VPC
+resource "aws_security_group" "lambda_sg" {
+  count       = length(var.subnet_ids) > 0 ? 1 : 0
+  name        = "${var.function_name}-sg-${var.environment}"
+  description = "Security group for Lambda function ${var.function_name}"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
 }
 
 # DynamoDB access policy
@@ -96,7 +79,7 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 
 # Lambda function
 resource "aws_lambda_function" "api_handler" {
-  filename      = "lambda_function.zip" # Package during build
+  filename      = "lambda_function.zip"
   function_name = var.function_name
   handler       = var.handler
   runtime       = var.runtime
@@ -116,25 +99,17 @@ resource "aws_lambda_function" "api_handler" {
   tracing_config {
     mode = "Active"
   }
-}
 
-output "lambda_role_arn" {
-  value       = aws_iam_role.lambda_role.arn
-  description = "The ARN of the IAM role assumed by the Lambda function during execution."
-}
-
-output "api_handler_invoke_arn" {
-  value       = aws_lambda_function.api_handler.invoke_arn
-  description = "The ARN used by API Gateway to grant permission to invoke the Lambda function."
+  dynamic "vpc_config" {
+    for_each = length(var.subnet_ids) > 0 ? [1] : []
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = [aws_security_group.lambda_sg[0].id]
+    }
+  }
 }
 
 # --- EventBridge CRON Support --- #
-
-variable "schedule_expression" {
-  type        = string
-  description = "Optional EventBridge schedule expression (e.g., 'rate(5 minutes)'). If provided, it creates a CRON trigger for this Lambda."
-  default     = ""
-}
 
 resource "aws_cloudwatch_event_rule" "lambda_cron" {
   count               = var.schedule_expression != "" ? 1 : 0
