@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import MapComponent from './components/MapComponent';
 import SportsPanel from './components/SportsPanel';
+import GlobalDashboard from './components/GlobalDashboard';
 import ChatAssistant from './components/ChatAssistant';
 import { useWebSocket } from './services/websocket';
 import { useSportsStore } from './store/sportsStore';
@@ -61,7 +62,7 @@ export default function App() {
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-96 bg-secondary border-l border-gray-700 flex flex-col">
+      <div className="w-[450px] bg-secondary border-l border-gray-700 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-700">
           <h1 className="text-xl font-bold text-white">🌍 Sports Monitor</h1>
@@ -76,18 +77,13 @@ export default function App() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {selectedCountry ? (
-            <SportsPanel country={selectedCountry} />
-          ) : (
-            <div className="p-4 text-center text-gray-400">
-              <p>👆 Click on a country to see live sports</p>
-              {liveEvents.length > 0 && (
-                <p className="text-xs mt-4 text-gray-500">
-                  Loading {liveEvents.length} events...
-                </p>
-              )}
+            <div className="flex-1 overflow-y-auto">
+              <SportsPanel country={selectedCountry} />
             </div>
+          ) : (
+            <GlobalDashboard />
           )}
         </div>
 
