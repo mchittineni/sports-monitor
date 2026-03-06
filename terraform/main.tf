@@ -42,6 +42,7 @@ module "databases" {
   source = "./modules/databases"
 
   vpc_id      = module.networking.vpc_id
+  subnet_ids  = module.networking.private_subnet_ids
   environment = var.environment
   db_name     = var.db_name
   db_username = var.db_username
@@ -138,8 +139,9 @@ module "lambda_api" {
 
   environment    = var.environment
   vpc_id         = module.networking.vpc_id
+  subnet_ids     = module.networking.private_subnet_ids
   function_name  = "sports-monitor-api-${var.environment}"
-  handler        = "dist/lambda.handler" # Updated to new API entrypoint
+  handler        = "dist/lambda.handler"
   runtime        = "nodejs20.x"
   db_host        = module.databases.db_endpoint
   db_name        = var.db_name
@@ -152,13 +154,14 @@ module "lambda_ingest_worker" {
 
   environment         = var.environment
   vpc_id              = module.networking.vpc_id
+  subnet_ids          = module.networking.private_subnet_ids
   function_name       = "sports-monitor-ingest-worker-${var.environment}"
   handler             = "dist/workers/ingestSports.handler"
   runtime             = "nodejs20.x"
   db_host             = module.databases.db_endpoint
   db_name             = var.db_name
   dynamodb_table      = aws_dynamodb_table.sports_events.name
-  schedule_expression = "rate(5 minutes)" # Wires up EventBridge automatically
+  schedule_expression = "rate(5 minutes)"
 }
 
 # AI Services (AWS Bedrock)
@@ -187,24 +190,3 @@ module "monitoring" {
   alarm_email    = var.alarm_email
 }
 
-# Outputs
-output "api_gateway_url" {
-  value       = module.api_gateway.api_endpoint
-  description = "API Gateway endpoint URL"
-}
-
-output "cloudfront_domain" {
-  value       = module.frontend.cloudfront_domain_name
-  description = "CloudFront distribution domain"
-}
-
-output "rds_endpoint" {
-  value       = module.databases.db_endpoint
-  sensitive   = true
-  description = "RDS PostgreSQL endpoint"
-}
-
-output "dynamodb_table_name" {
-  value       = aws_dynamodb_table.sports_events.name
-  description = "DynamoDB table name"
-}

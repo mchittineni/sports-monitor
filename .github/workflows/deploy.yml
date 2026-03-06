@@ -62,6 +62,11 @@ jobs:
             -var="alarm_email=${{ secrets.ALARM_EMAIL }}" \
             -out=tfplan
 
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ env.TF_ENV }}
+          path: terraform/tfplan
 
   terraform-apply:
     runs-on: ubuntu-latest
@@ -91,17 +96,18 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=${TF_ENV}/terraform.tfstate" \
-            -backend-config="region=us-east-1"
+            -backend-config="region=${{ secrets.AWS_REGION }}"
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ env.TF_ENV }}
+          path: terraform/
 
       - name: Terraform Apply
         run: |
           cd terraform
-          terraform apply \
-            -var-file="environments/${TF_ENV}.tfvars" \
-            -var="db_username=${{ secrets.DB_USERNAME }}" \
-            -var="db_password=${{ secrets.DB_PASSWORD }}" \
-            -var="alarm_email=${{ secrets.ALARM_EMAIL }}" \
-            -auto-approve
+          terraform apply -auto-approve tfplan
 
       - name: Get outputs
         id: tf-outputs

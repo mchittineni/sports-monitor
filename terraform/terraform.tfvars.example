@@ -1,0 +1,28 @@
+# Copy this file to terraform.tfvars (never commit terraform.tfvars — it contains secrets)
+# Usage: cp terraform.tfvars.example terraform.tfvars
+
+# ── AWS ──────────────────────────────────────────────────────────────────────
+aws_region = "us-east-1"
+
+# ── Environment ───────────────────────────────────────────────────────────────
+# Must be one of: dev | staging | prod
+environment = "dev"
+
+# ── Networking ────────────────────────────────────────────────────────────────
+vpc_cidr = "10.0.0.0/16"
+
+availability_zones = [
+  "us-east-1a",
+  "us-east-1b",
+  "us-east-1c",
+]
+
+# ── Database ──────────────────────────────────────────────────────────────────
+db_name = "sports_monitor"
+
+# SENSITIVE — supply via CI/CD secrets or a secrets manager, not plain text
+db_username = "sports_admin"
+db_password = "change-me-before-use-min16chars!"
+
+# ── Monitoring ────────────────────────────────────────────────────────────────
+alarm_email = "ops-team@example.com"

@@ -6,7 +6,10 @@ output:
   - cli
   - sarif # Standard format for GitHub Code Scanning alerts
 quiet: true # Reduces noise by hiding passed checks
-soft-fail: true # Hard fail for CI/CD protection
+soft-fail: false
+hard-fail-on:
+  - HIGH
+  - CRITICAL
 compact: true
 
 # --- Scan Scope ---

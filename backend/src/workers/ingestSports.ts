@@ -1,7 +1,7 @@
 import { setCache } from '../utils/redisClient.js';
 
-// Centralised mock data representing an external 3rd-party Tracking API
-const externalEventsApi = [
+// Static mock data — timestamps are generated fresh per invocation inside the handler
+const mockEventsData = [
   {
     id: '1',
     country: 'USA',
@@ -10,7 +10,6 @@ const externalEventsApi = [
     awayTeam: 'Buffalo Bills',
     score: '21-17',
     status: 'live',
-    timestamp: Date.now(),
   },
   {
     id: '2',
@@ -20,7 +19,6 @@ const externalEventsApi = [
     awayTeam: 'Liverpool',
     score: '2-1',
     status: 'live',
-    timestamp: Date.now(),
   },
   {
     id: '3',
@@ -30,7 +28,6 @@ const externalEventsApi = [
     awayTeam: 'Barcelona',
     score: '3-2',
     status: 'live',
-    timestamp: Date.now(),
   },
   {
     id: '4',
@@ -40,12 +37,11 @@ const externalEventsApi = [
     awayTeam: 'Pakistan',
     score: '187/4',
     status: 'live',
-    timestamp: Date.now(),
   },
 ];
 
 /**
- * Executes as an AWS EventBridge Scheduled Rule (CRON)
+ * Executes as an AWS EventBridge Scheduled Rule (CRON).
  * Fetches data from remote APIs asynchronously and seeds the Redis cache
  * to ensure 0-latency API response times globally.
  */
@@ -53,10 +49,11 @@ export const handler = async (_event: any = {}) => {
   console.log('CRON: Executing async sports ingestion worker...');
 
   try {
-    // 1. Fetch latest data (Mocked)
-    const latestEvents = externalEventsApi;
+    // Stamp the current time at invocation, not at module load
+    const timestamp = Date.now();
+    const latestEvents = mockEventsData.map((e) => ({ ...e, timestamp }));
 
-    // 2. Compute country-specific caches
+    // Compute country-specific caches
     const byCountry = latestEvents.reduce((acc: Record<string, any[]>, e) => {
       const c = e.country.toLowerCase();
       if (!acc[c]) acc[c] = [];
@@ -64,12 +61,13 @@ export const handler = async (_event: any = {}) => {
       return acc;
     }, {});
 
-    // 3. Save to ElastiCache / Redis indefinitely. The worker will refresh it.
-    await setCache('sports_live_events', latestEvents, 300); // 5 minutes
-
-    for (const [country, events] of Object.entries(byCountry)) {
-      await setCache(`sports_by_country:${country}`, events, 300);
-    }
+    // Write all cache keys in parallel
+    await Promise.all([
+      setCache('sports_live_events', latestEvents, 300),
+      ...Object.entries(byCountry).map(([country, events]) =>
+        setCache(`sports_by_country:${country}`, events, 300)
+      ),
+    ]);
 
     console.log(
       `CRON: Successfully ingested ${latestEvents.length} events into Elasticache Redis.`

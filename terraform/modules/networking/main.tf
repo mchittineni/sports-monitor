@@ -1,8 +1,3 @@
-variable "vpc_cidr" {
-  type        = string
-  description = "The IPv4 CIDR block for the entire Virtual Private Cloud (VPC)."
-}
-
 # KMS Key for VPC flow logs
 resource "aws_kms_key" "vpc_flow_logs" {
   description             = "KMS key for VPC flow logs encryption"
@@ -13,16 +8,6 @@ resource "aws_kms_key" "vpc_flow_logs" {
 resource "aws_kms_alias" "vpc_flow_logs" {
   name          = "alias/sports-monitor-vpc-flow-logs-${var.environment}"
   target_key_id = aws_kms_key.vpc_flow_logs.key_id
-}
-
-variable "availability_zones" {
-  type        = list(string)
-  description = "A list of AWS Availability Zones used to span public and private subnets."
-}
-
-variable "environment" {
-  type        = string
-  description = "Deployment environment identifier for resource tagging."
 }
 
 # VPC
@@ -143,17 +128,44 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-output "vpc_id" {
-  value       = aws_vpc.main.id
-  description = "The ID of the newly provisioned VPC."
+# Elastic IP for NAT Gateway
+resource "aws_eip" "nat" {
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.main]
+
+  tags = {
+    Name = "sports-monitor-nat-eip-${var.environment}"
+  }
 }
 
-output "public_subnet_ids" {
-  value       = aws_subnet.public[*].id
-  description = "List of IDs representing the provisioned public subnets."
+# NAT Gateway in first public subnet — single instance for cost efficiency
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags = {
+    Name = "sports-monitor-nat-${var.environment}"
+  }
+
+  depends_on = [aws_internet_gateway.main]
 }
 
-output "private_subnet_ids" {
-  value       = aws_subnet.private[*].id
-  description = "List of IDs representing the provisioned private subnets."
+# Route Table for Private Subnets — routes outbound traffic through NAT
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+
+  tags = {
+    Name = "private-rt-${var.environment}"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
 }
