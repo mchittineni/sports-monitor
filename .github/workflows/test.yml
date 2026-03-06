@@ -197,13 +197,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: terraform/test/package-lock.json
 
-      - name: Install NOde
-        run: npm install
-
       - name: Install dependencies
+        working-directory: ./terraform/test
         run: npm ci
 
       - name: Run Integration Tests
+        working-directory: ./terraform/test
         run: npm run test
         env:
           AWS_REGION: us-east-1
