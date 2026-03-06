@@ -203,14 +203,14 @@ jobs:
 
       - name: Run Integration Tests
         working-directory: ./terraform/test
-        run: npm run test
+        run: npm run test:coverage -- --run
         env:
           AWS_REGION: us-east-1
 
-      - name: Run Native Terraform Tests & Coverage Verification
-        working-directory: ./terraform
+      - name: Run Native Terraform Tests
         run: |
-          terraform test
-          cd test && npm run test:coverage
+          terraform init -backend=false
+          terraform test -run=integration -coverprofile=coverage.out
+          go tool cover -func=coverage.out | grep total | awk '{print $3}'
         env:
           AWS_REGION: us-east-1
