@@ -95,7 +95,7 @@ jobs:
       contents: read
       security-events: write
       actions: read
-      
+
     defaults:
       run:
         working-directory: ./terraform
@@ -103,7 +103,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
-        
+
       - name: Run Trivy vulnerability scanner (IaC)
         uses: aquasecurity/trivy-action@master
         with:
@@ -113,9 +113,14 @@ jobs:
           output: 'trivy-results.sarif'
           exit-code: '1'
           severity: 'HIGH,CRITICAL'
+        env:
+          TF_VAR_environment: test
+          TF_VAR_db_username: dummyuser
+          TF_VAR_db_password: dummypassword
+          TF_VAR_alarm_email: dummy@example.com
 
       # - name: Setup TFLint
-      #   uses: terraform-linters/setup-tflint@v6        
+      #   uses: terraform-linters/setup-tflint@v6
       #   with:
       #     tflint_version: latest
       #     tflint_config_path: terraform/.tflint.hcl
@@ -147,7 +152,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: '.' 
+          sarif_file: '.'
           category: 'iac-scanners'
 
   terraform-validate:
