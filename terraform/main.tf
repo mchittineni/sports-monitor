@@ -8,11 +8,12 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "sports-monitor-terraform-state"
-    key            = "prod/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "terraform-lock"
+    bucket       = "sports-monitor-terraform-state"
+    key          = "prod/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
+
   }
 }
 
@@ -30,20 +31,19 @@ provider "aws" {
 
 # VPC and Networking
 module "networking" {
-  source = "./modules/networking"
-
+  source             = "./modules/networking"
+  environment        = var.environment
   vpc_cidr           = var.vpc_cidr
   availability_zones = var.availability_zones
-  environment        = var.environment
+
 }
 
 # RDS PostgreSQL Database
 module "databases" {
-  source = "./modules/databases"
-
+  source      = "./modules/databases"
+  environment = var.environment
   vpc_id      = module.networking.vpc_id
   subnet_ids  = module.networking.private_subnet_ids
-  environment = var.environment
   db_name     = var.db_name
   db_username = var.db_username
   db_password = var.db_password
@@ -124,8 +124,7 @@ resource "aws_dynamodb_table" "sports_events" {
 
 # API Gateway
 module "api_gateway" {
-  source = "./modules/api-gateway"
-
+  source            = "./modules/api-gateway"
   environment       = var.environment
   lambda_invoke_arn = module.lambda_api.api_handler_invoke_arn
   # Override this per environment if you want stricter CORS
@@ -135,23 +134,22 @@ module "api_gateway" {
 
 # Main Express API Lambda
 module "lambda_api" {
-  source = "./modules/lambda"
-
-  environment    = var.environment
-  vpc_id         = module.networking.vpc_id
-  subnet_ids     = module.networking.private_subnet_ids
-  function_name  = "sports-monitor-api-${var.environment}"
-  handler        = "dist/lambda.handler"
-  runtime        = "nodejs20.x"
-  db_host        = module.databases.db_endpoint
-  db_name        = var.db_name
-  dynamodb_table = aws_dynamodb_table.sports_events.name
+  source              = "./modules/lambda"
+  environment         = var.environment
+  vpc_id              = module.networking.vpc_id
+  subnet_ids          = module.networking.private_subnet_ids
+  function_name       = "sports-monitor-api-${var.environment}"
+  handler             = "dist/lambda.handler"
+  runtime             = "nodejs20.x"
+  db_host             = module.databases.db_endpoint
+  db_name             = var.db_name
+  dynamodb_table      = aws_dynamodb_table.sports_events.name
+  schedule_expression = "rate(10 minutes)"
 }
 
 # CRON Background Data Ingestion Lambda
 module "lambda_ingest_worker" {
-  source = "./modules/lambda"
-
+  source              = "./modules/lambda"
   environment         = var.environment
   vpc_id              = module.networking.vpc_id
   subnet_ids          = module.networking.private_subnet_ids
@@ -166,8 +164,7 @@ module "lambda_ingest_worker" {
 
 # AI Services (AWS Bedrock)
 module "ai_services" {
-  source = "./modules/ai-services"
-
+  source          = "./modules/ai-services"
   environment     = var.environment
   vpc_id          = module.networking.vpc_id
   lambda_role_arn = module.lambda_api.lambda_role_arn
@@ -175,23 +172,20 @@ module "ai_services" {
 
 # ECR Container Registry
 module "ecr" {
-  source = "./modules/ecr"
-
+  source      = "./modules/ecr"
   environment = var.environment
 }
 
 # S3 for Frontend Hosting
 module "frontend" {
-  source = "./modules/frontend"
-
+  source               = "./modules/frontend"
   environment          = var.environment
   frontend_bucket_name = "sports-monitor-frontend-${var.environment}"
 }
 
 # CloudWatch and Monitoring
 module "monitoring" {
-  source = "./modules/monitoring"
-
+  source         = "./modules/monitoring"
   environment    = var.environment
   log_group_name = "/aws/lambda/sports-monitor"
   alarm_email    = var.alarm_email
