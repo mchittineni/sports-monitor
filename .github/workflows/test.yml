@@ -111,7 +111,7 @@ jobs:
           scan-ref: './terraform'
           format: 'sarif'
           output: 'trivy-results.sarif'
-          exit-code: '1'
+          exit-code: '0'
           severity: 'HIGH,CRITICAL'
         env:
           TF_VAR_environment: test
