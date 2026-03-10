@@ -2,8 +2,24 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Frontend: React](https://img.shields.io/badge/frontend-React-61DAFB?logo=react&logoColor=black)](#)
+[![Styling: TailwindCSS](https://img.shields.io/badge/Styling-TailwindCSS-06B6D4?logo=tailwindcss&logoColor=white)](#)
+[![Maps: React--Leaflet](https://img.shields.io/badge/Maps-React--Leaflet-199900?logo=leaflet&logoColor=white)](#)
+[![State: Zustand](https://img.shields.io/badge/State-Zustand-443E38?logo=react&logoColor=white)](#)
+[![HTTP: Axios](https://img.shields.io/badge/HTTP-Axios-5A29E4?logo=axios&logoColor=white)](#)
+[![Realtime: Socket.io](https://img.shields.io/badge/Realtime-Socket.io-010101?logo=socket.io&logoColor=white)](#)
 [![Backend: Node.js](https://img.shields.io/badge/backend-Node.js-339933?logo=node.js&logoColor=white)](#)
+[![Backend: Lambda--Express](https://img.shields.io/badge/Backend-Lambda--Express-FF9900?logo=aws-lambda&logoColor=white)](#)
+[![Adapter: Serverless--HTTP](https://img.shields.io/badge/Adapter-Serverless--HTTP-D22128?logo=serverless&logoColor=white)](#)
+[![Network: Private--VPC](https://img.shields.io/badge/Network-Private--VPC-232F3E?logo=amazon-vpc&logoColor=white)](#)
+[![Egress: NAT--Gateway](https://img.shields.io/badge/Egress-NAT--Gateway-527FFF?logo=amazon-aws&logoColor=white)](#)
+[![Database: RDS--PostgreSQL](https://img.shields.io/badge/Database-RDS--PostgreSQL-4169E1?logo=amazon-rds&logoColor=white)](#)
+[![NoSQL: DynamoDB](https://img.shields.io/badge/NoSQL-DynamoDB-4053D6?logo=amazon-dynamodb&logoColor=white)](#)
+[![Cache: ElastiCache--Redis](https://img.shields.io/badge/Cache-ElastiCache--Redis-C6302B?logo=redis&logoColor=white)](#)
+[![Hosting: AWS](https://img.shields.io/badge/Hosting-AWS-232F3E?logo=amazon-aws&logoColor=white)](#)
+[![CI/CD: GitHub--Actions](https://img.shields.io/badge/CI/CD-GitHub--Actions-2088FF?logo=github-actions&logoColor=white)](#)
 [![Infrastructure: Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)](#)
+[![Security: Trivy](https://img.shields.io/badge/Security-Trivy-3D61E1?logo=trivy&logoColor=white)](#)
+[![Cost: Infracost](https://img.shields.io/badge/Cost-Infracost-00D1B2?logo=infracost&logoColor=white)](#)
 
 Welcome to **Sports Monitor**! A modern, highly available, and cloud-native web application that visualizes live sports activity worldwide in real-time through an interactive map interface.
 
