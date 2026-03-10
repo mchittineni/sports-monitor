@@ -214,7 +214,9 @@ jobs:
 
       - name: Run Integration Tests
         working-directory: ./terraform/test
-        run: npm run test:coverage -- --run
+        run: |
+          npm run test
+          npm run test:coverage -- --run
         env:
           AWS_REGION: us-east-1
 
