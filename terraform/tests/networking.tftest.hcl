@@ -11,6 +11,7 @@ run "execute_networking_plan" {
     environment        = "test"
     vpc_cidr           = "10.0.0.0/16"
     availability_zones = ["us-east-1a", "us-east-1b"]
+    kms_key_arn        = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
   }
 
   # Assertion 1: Verify VPC CIDR

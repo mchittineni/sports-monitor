@@ -34,3 +34,8 @@ variable "subnet_ids" {
   type        = list(string)
   description = "Private subnet IDs for the RDS DB subnet group."
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "The ARN of the shared KMS key for encrypting RDS data."
+}

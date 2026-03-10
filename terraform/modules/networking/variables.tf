@@ -12,3 +12,8 @@ variable "environment" {
   type        = string
   description = "Deployment environment identifier for resource tagging."
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "The ARN of the KMS key used for encrypting resources within the VPC."
+}

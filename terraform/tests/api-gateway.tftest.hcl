@@ -10,13 +10,14 @@ run "execute_api_gateway_plan" {
   variables {
     environment       = "test"
     lambda_invoke_arn = "arn:aws:lambda:us-east-1:123456789012:function:sports-api-test"
+    kms_key_arn       = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
     allowed_origins   = ["http://localhost:3000"]
   }
 
   # Assertion 1: Verify KMS Key Rotation
   assert {
-    condition     = aws_kms_key.logs.enable_key_rotation == true
-    error_message = "KMS key rotation must be enabled for security compliance."
+    condition     = aws_cloudwatch_log_group.api_gateway_logs.kms_key_id == var.kms_key_arn
+    error_message = "API Gateway logs are not encrypted with the provided KMS key."
   }
 
   # Assertion 2: Verify API Protocol Type

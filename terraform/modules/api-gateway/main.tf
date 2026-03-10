@@ -1,15 +1,3 @@
-# KMS Key for CloudWatch logs
-resource "aws_kms_key" "logs" {
-  description             = "KMS key for CloudWatch logs encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-}
-
-resource "aws_kms_alias" "logs" {
-  name          = "alias/sports-monitor-logs-${var.environment}"
-  target_key_id = aws_kms_key.logs.key_id
-}
-
 # IAM Role for API Gateway CloudWatch Logging
 resource "aws_iam_role" "api_gateway_cloudwatch" {
   name = "api-gateway-cloudwatch-role-${var.environment}"
@@ -42,7 +30,7 @@ resource "aws_api_gateway_account" "main" {
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   name              = "/aws/apigateway/sports-monitor-api-${var.environment}"
   retention_in_days = 30
-  kms_key_id        = aws_kms_key.logs.arn
+  kms_key_id        = var.kms_key_arn
 }
 
 resource "aws_apigatewayv2_api" "main" {

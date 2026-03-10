@@ -10,6 +10,7 @@ run "execute_frontend_plan" {
   variables {
     environment          = "test"
     frontend_bucket_name = "test-frontend-bucket"
+    kms_key_arn          = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
   }
 
   # Assertion 1: Check if the S3 bucket name is set correctly

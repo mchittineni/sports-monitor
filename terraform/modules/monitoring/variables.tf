@@ -12,3 +12,8 @@ variable "alarm_email" {
   type        = string
   description = "The destination email address to receive SNS alerts for infrastructure alarms."
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "ARN of the KMS key used for encrypting the CloudWatch logs."
+}
