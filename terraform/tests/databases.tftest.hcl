@@ -32,8 +32,8 @@ run "execute_databases_plan" {
 
   # Assertion 3: Verify Conditional Instance Class
   assert {
-    condition     = aws_db_instance.postgres.instance_class == "db.t3.micro"
-    error_message = "Instance Class should use db.t3.micro."
+    condition     = aws_db_instance.postgres.instance_class == "db.t4g.micro"
+    error_message = "Instance Class should use db.t4g.micro."
   }
 
   # Assertion 4: Verify Backup Retention Logic

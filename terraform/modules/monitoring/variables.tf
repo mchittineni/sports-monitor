@@ -1,6 +1,6 @@
 variable "environment" {
   type        = string
-  description = "The deployment environment, used to separate dev/prod monitoring metrics."
+  description = "The deployment environment, used to separate Dev/Staging/Prod monitoring metrics."
 }
 
 variable "log_group_name" {

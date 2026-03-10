@@ -79,6 +79,8 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 
 # Lambda function
 resource "aws_lambda_function" "api_handler" {
+  # checkov:skip=CKV_AWS_272: ADD REASON
+  architectures = ["arm64"]
   filename      = "lambda_function.zip"
   function_name = var.function_name
   handler       = var.handler

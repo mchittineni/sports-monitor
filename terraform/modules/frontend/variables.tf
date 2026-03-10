@@ -1,6 +1,6 @@
 variable "environment" {
   type        = string
-  description = "Execution environment name used for resource naming (e.g., dev, prod)."
+  description = "Execution environment name used for resource naming (e.g., Dev, Staging, Prod)."
 }
 
 variable "frontend_bucket_name" {
