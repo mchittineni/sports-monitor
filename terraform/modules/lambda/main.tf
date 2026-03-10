@@ -84,6 +84,7 @@ resource "aws_lambda_function" "api_handler" {
   handler       = var.handler
   runtime       = var.runtime
   role          = aws_iam_role.lambda_role.arn
+  kms_key_arn   = var.kms_key_arn
   timeout       = 30
   memory_size   = 512
 

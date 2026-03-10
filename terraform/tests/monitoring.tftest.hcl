@@ -10,6 +10,7 @@ run "execute_monitoring_plan" {
   variables {
     environment    = "test"
     log_group_name = "/aws/lambda/test-function"
+    kms_key_arn    = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
     alarm_email    = "alerts@example.com"
   }
 

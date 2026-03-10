@@ -15,6 +15,7 @@ run "execute_databases_plan" {
     db_username = "postgres"
     db_password = "supersecretpassword123"
     multi_az    = false
+    kms_key_arn = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
   }
 
   # Assertion 1: Verify Database Name

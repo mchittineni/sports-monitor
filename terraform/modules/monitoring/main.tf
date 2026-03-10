@@ -1,20 +1,8 @@
-# KMS Key for SNS encryption
-resource "aws_kms_key" "sns" {
-  description             = "KMS key for SNS encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-}
-
-resource "aws_kms_alias" "sns" {
-  name          = "alias/sports-monitor-sns-${var.environment}"
-  target_key_id = aws_kms_key.sns.key_id
-}
-
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "api_logs" {
   name              = "${var.log_group_name}-${var.environment}"
   retention_in_days = var.environment == "prod" ? 30 : 7
-  kms_key_id        = aws_kms_key.sns.arn
+  kms_key_id        = var.kms_key_arn
 
   tags = {
     Name = "api-logs"
@@ -24,7 +12,7 @@ resource "aws_cloudwatch_log_group" "api_logs" {
 # SNS Topic for alerts
 resource "aws_sns_topic" "alerts" {
   name              = "sports-monitor-alerts-${var.environment}"
-  kms_master_key_id = aws_kms_key.sns.id
+  kms_master_key_id = var.kms_key_arn
 }
 
 resource "aws_sns_topic_subscription" "alerts_email" {

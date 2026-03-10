@@ -1,15 +1,3 @@
-# KMS Key for VPC flow logs
-resource "aws_kms_key" "vpc_flow_logs" {
-  description             = "KMS key for VPC flow logs encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-}
-
-resource "aws_kms_alias" "vpc_flow_logs" {
-  name          = "alias/sports-monitor-vpc-flow-logs-${var.environment}"
-  target_key_id = aws_kms_key.vpc_flow_logs.key_id
-}
-
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -25,7 +13,7 @@ resource "aws_vpc" "main" {
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/sports-monitor-flow-logs-${var.environment}"
   retention_in_days = 30
-  kms_key_id        = aws_kms_key.vpc_flow_logs.arn
+  kms_key_id        = var.kms_key_arn
 }
 
 resource "aws_iam_role" "vpc_flow_log_role" {

@@ -49,3 +49,8 @@ variable "schedule_expression" {
   description = "Optional EventBridge schedule expression (e.g., 'rate(5 minutes)'). If provided, creates a CRON trigger for this Lambda."
   default     = ""
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "ARN of the KMS key used for encrypting the Lambda function's environment variables."
+}

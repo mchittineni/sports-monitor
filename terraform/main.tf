@@ -13,7 +13,6 @@ terraform {
     region       = "us-east-1"
     use_lockfile = true
     encrypt      = true
-
   }
 }
 
@@ -29,13 +28,23 @@ provider "aws" {
   }
 }
 
+# --- Centralized Security Layer ---
+
+# Single KMS Key to replace all individual module keys
+module "kms" {
+  source      = "./modules/kms"
+  environment = var.environment
+}
+
+# --- Infrastructure Layers ---
+
 # VPC and Networking
 module "networking" {
   source             = "./modules/networking"
   environment        = var.environment
   vpc_cidr           = var.vpc_cidr
   availability_zones = var.availability_zones
-
+  kms_key_arn        = module.kms.key_arn
 }
 
 # RDS PostgreSQL Database
@@ -48,21 +57,10 @@ module "databases" {
   db_username = var.db_username
   db_password = var.db_password
   multi_az    = var.environment == "prod" ? true : false
+  kms_key_arn = module.kms.key_arn
 }
 
-# KMS Key for DynamoDB encryption
-resource "aws_kms_key" "dynamodb" {
-  description             = "KMS key for DynamoDB encryption"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-}
-
-resource "aws_kms_alias" "dynamodb" {
-  name          = "alias/sports-monitor-dynamodb-${var.environment}"
-  target_key_id = aws_kms_key.dynamodb.key_id
-}
-
-# DynamoDB Tables
+# DynamoDB Tables 
 resource "aws_dynamodb_table" "sports_events" {
   name         = "SportsEvents-${var.environment}"
   billing_mode = "PAY_PER_REQUEST"
@@ -114,11 +112,7 @@ resource "aws_dynamodb_table" "sports_events" {
 
   server_side_encryption {
     enabled     = true
-    kms_key_arn = aws_kms_key.dynamodb.arn
-  }
-
-  tags = {
-    Name = "SportsEvents"
+    kms_key_arn = module.kms.key_arn
   }
 }
 
@@ -127,6 +121,7 @@ module "api_gateway" {
   source            = "./modules/api-gateway"
   environment       = var.environment
   lambda_invoke_arn = module.lambda_api.api_handler_invoke_arn
+  kms_key_arn       = module.kms.key_arn
   # Override this per environment if you want stricter CORS
   # (for example, to only allow your production frontend domain).
   # allowed_origins = ["https://your-frontend.example.com"]
@@ -141,6 +136,7 @@ module "lambda_api" {
   function_name       = "sports-monitor-api-${var.environment}"
   handler             = "dist/lambda.handler"
   runtime             = "nodejs20.x"
+  kms_key_arn         = module.kms.key_arn
   db_host             = module.databases.db_endpoint
   db_name             = var.db_name
   dynamodb_table      = aws_dynamodb_table.sports_events.name
@@ -156,6 +152,7 @@ module "lambda_ingest_worker" {
   function_name       = "sports-monitor-ingest-worker-${var.environment}"
   handler             = "dist/workers/ingestSports.handler"
   runtime             = "nodejs20.x"
+  kms_key_arn         = module.kms.key_arn
   db_host             = module.databases.db_endpoint
   db_name             = var.db_name
   dynamodb_table      = aws_dynamodb_table.sports_events.name
@@ -181,6 +178,7 @@ module "frontend" {
   source               = "./modules/frontend"
   environment          = var.environment
   frontend_bucket_name = "sports-monitor-frontend-${var.environment}"
+  kms_key_arn          = module.kms.key_arn
 }
 
 # CloudWatch and Monitoring
@@ -189,5 +187,5 @@ module "monitoring" {
   environment    = var.environment
   log_group_name = "/aws/lambda/sports-monitor"
   alarm_email    = var.alarm_email
+  kms_key_arn    = module.kms.key_arn
 }
-

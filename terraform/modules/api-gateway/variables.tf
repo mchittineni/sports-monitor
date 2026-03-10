@@ -13,3 +13,8 @@ variable "allowed_origins" {
   description = "Allowed CORS origins for the API Gateway."
   default     = ["*"]
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "The ARN of the shared KMS key for encrypting CloudWatch logs."
+}

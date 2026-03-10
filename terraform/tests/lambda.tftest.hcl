@@ -13,6 +13,7 @@ run "execute_lambda_plan" {
     function_name       = "test-lambda"
     handler             = "index.handler"
     runtime             = "nodejs18.x"
+    kms_key_arn         = "arn:aws:kms:us-east-1:123456789012:key/mock-id"
     db_host             = "localhost"
     db_name             = "testdb"
     dynamodb_table      = "test-table"
