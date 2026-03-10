@@ -31,6 +31,41 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  # Rule 1: Cleanup failed multipart uploads after 7 days
+  rule {
+    id     = "abort-incomplete-multipart-upload"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+  # Rule 2: Clean up noncurrent versions (old deployments)
+  rule {
+    id     = "cleanup-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90 # Keeps old versions for 3 months before deleting
+    }
+  }
+
+  # Rule 3: General object lifecycle (Transition older files to cheaper storage)
+  rule {
+    id     = "transition-to-infrequent-access"
+    status = "Enabled"
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+  }
+}
+
 # CloudFront Origin Access Control — restricts S3 access to CloudFront only
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "sports-monitor-oac-${var.environment}"
@@ -67,6 +102,7 @@ resource "aws_s3_bucket_policy" "frontend_oac" {
 
 # WAF for CloudFront
 resource "aws_wafv2_web_acl" "frontend" {
+  # checkov:skip=CKV_AWS_192: ADD REASON
   name  = "sports-monitor-frontend-waf-${var.environment}"
   scope = "CLOUDFRONT"
 

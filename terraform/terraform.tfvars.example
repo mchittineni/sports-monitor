@@ -5,7 +5,7 @@
 aws_region = "us-east-1"
 
 # ── Environment ───────────────────────────────────────────────────────────────
-# Must be one of: Dev | Staging | Prod
+# Must be one of: Dev | Stage | Prod
 environment = "Dev"
 
 # ── Networking ────────────────────────────────────────────────────────────────

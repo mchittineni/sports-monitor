@@ -120,7 +120,7 @@ cd terraform/test && npm test
 ### 🏷️ Tagging Strategy
 The project uses **Provider-Level Default Tags**. Do not add manual `tags` blocks to resources unless a unique identifier is required. Every resource automatically inherits:
 - `Project`: "Sports Monitor"
-- `Environment`: `var.environment` (dev/staging/prod)
+- `Environment`: `var.environment` (dev/Stage/prod)
 - `Service`: "Sports-Monitor-Core"
 - `ManagedBy`: "Terraform"
 
