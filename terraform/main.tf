@@ -24,6 +24,7 @@ provider "aws" {
       Project     = "Sports Monitor"
       Environment = var.environment
       ManagedBy   = "Terraform"
+      Service     = "Sports-Monitor-Core"
     }
   }
 }

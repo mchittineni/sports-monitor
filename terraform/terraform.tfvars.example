@@ -5,8 +5,8 @@
 aws_region = "us-east-1"
 
 # ── Environment ───────────────────────────────────────────────────────────────
-# Must be one of: dev | staging | prod
-environment = "dev"
+# Must be one of: Dev | Staging | Prod
+environment = "Dev"
 
 # ── Networking ────────────────────────────────────────────────────────────────
 vpc_cidr = "10.0.0.0/16"

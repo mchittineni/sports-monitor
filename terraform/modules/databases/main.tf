@@ -34,7 +34,7 @@ resource "aws_db_instance" "postgres" {
   identifier                          = "sports-monitor-${var.environment}"
   engine                              = "postgres"
   engine_version                      = "15.3"
-  instance_class                      = var.environment == "prod" ? "db.t3.medium" : "db.t3.micro"
+  instance_class                      = var.environment == "prod" ? "db.t4g.medium" : "db.t4g.micro"
   allocated_storage                   = 20
   max_allocated_storage               = 100
   storage_type                        = "gp3"

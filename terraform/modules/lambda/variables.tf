@@ -1,6 +1,6 @@
 variable "environment" {
   type        = string
-  description = "The deployment environment (e.g., dev, prod) to tag resources and configure env vars."
+  description = "The deployment environment (e.g., Dev, Staging, Prod) to tag resources and configure env vars."
 }
 
 variable "vpc_id" {

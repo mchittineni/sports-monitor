@@ -1,6 +1,6 @@
 variable "environment" {
   type        = string
-  description = "The deployment environment (e.g., dev, staging, prod) used for naming and tagging resources."
+  description = "The deployment environment (e.g., Dev, Staging, Prod) used for naming and tagging resources."
 }
 
 variable "lambda_invoke_arn" {

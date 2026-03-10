@@ -1,6 +1,6 @@
 # 💰 Infrastructure Cost Estimate Report
 
-**Total Monthly Cost: $273.48**
+**Total Monthly Project Cost: $159.09**
 *Usage-based costs are estimates; actual billing may vary based on traffic.*
 
 ---
@@ -9,19 +9,19 @@
 
 | Project | Baseline Cost | Usage Cost | Total Cost |
 | :--- | :--- | :--- | :--- |
-| **terraform-prod** | $154.50 | - | **$154.50** |
-| **terraform-staging** | $59.49 | - | **$59.49** |
-| **terraform-dev** | $59.49 | - | **$59.49** |
-| **OVERALL TOTAL** | | | **$273.48** |
+| **terraform-dev** | $53.03 | - | **$53.03** |
+| **terraform-staging** | $53.03 | - | **$53.03** |
+| **terraform-prod** | $53.03 | - | **$53.03** |
+| **OVERALL TOTAL** | | | **$159.09** |
 
 ---
 
 ## 🔴 Production Environment (`terraform-prod`)
-**Total: $154.50/mo**
+**Total: $53.03/mo**
 
 ### 🗄️ Databases
-* **RDS PostgreSQL Instance** (Multi-AZ, db.t3.medium): **$105.85**
-* **Storage** (gp3, 20GB): **$4.60**
+* **RDS PostgreSQL Instance** (Single-AZ, db.t4g.micro): **$11.68**
+* **Storage** (gp3, 20GB): **$2.30**
 * *Performance Insights & Backups: Usage-based*
 
 ### 🌐 Networking & Security
@@ -30,15 +30,15 @@
 * *Data Processing & WAF Requests: Usage-based*
 
 ### 🔐 Encryption (KMS)
-* **6 Customer Master Keys** (RDS, S3, SNS, DynamoDB, Logs, VPC Flow): **$6.00** ($1.00/ea)
+* **Shared Customer Master Key**: **$1.00** (Consolidated across all modules)
 
 ---
 
 ## 🟠 Staging & Dev Environments
-**Total: $59.49/mo (per environment)**
+**Total: $53.03/mo (per environment)**
 
 ### 🗄️ Databases
-* **RDS PostgreSQL Instance** (Single-AZ, db.t3.micro): **$13.14**
+* **RDS PostgreSQL Instance** (Single-AZ, db.t4g.micro): **$11.68**
 * **Storage** (gp3, 20GB): **$2.30**
 
 ### 🌐 Networking & Security
@@ -46,7 +46,7 @@
 * **WAF Web ACL**: **$5.00**
 
 ### 🔐 Encryption (KMS)
-* **6 Customer Master Keys**: **$6.00**
+* **Shared Customer Master Key**: **$1.00**
 
 ---
 
@@ -56,15 +56,16 @@
 | Service | Component | Unit Price |
 | :--- | :--- | :--- |
 | **API Gateway** | Requests | $1.00 per 1M requests |
-| **Lambda** | Compute Duration | $0.00001667 per GB-sec |
+| **Lambda** | Compute Duration (ARM64) | $0.00001333 per GB-seconds |
 | **CloudFront** | Data Transfer | $0.085 per GB (US/EU) |
 | **S3** | Storage/Requests | $0.023 per GB |
-| **DynamoDB** | Read/Write Units | $1.25 per 1M WRU / $0.25 per 1M RRU |
+| **DynamoDB** | Read/Write Units | $1.25 per 1M WRUs / $0.25 per 1M RRUs |
 | **CloudWatch** | Logs Ingested | $0.50 per GB |
 | **SNS** | Email Notifications | $2.00 per 100k (after 1k free) |
 
 ---
 
 > [!NOTE]
-> **Resource Detection:** 246 cloud resources detected. 66 estimated, 180 free.
+> **Resource Detection:** 216 cloud resources detected. 51 estimated, 165 free.
+> **Optimization Wins:** Moving to **Shared KMS Keys** saved **$15.00/month** across the project. Switching to **Graviton (t4g)** instances and ARM64 runtimes further reduced database and Lambda baseline costs.
 > Estimates generated via Infracost. For detailed breakdowns, check the full CLI output.
