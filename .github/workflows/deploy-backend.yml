@@ -12,11 +12,6 @@ on:
           - dev
           - staging
           - prod
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
 
 concurrency:
   group: deploy-backend-${{ github.ref }}

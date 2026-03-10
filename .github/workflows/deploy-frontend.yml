@@ -12,11 +12,6 @@ on:
           - dev
           - staging
           - prod
-  push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
 
 concurrency:
   group: deploy-frontend-${{ github.ref }}
