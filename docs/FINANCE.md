@@ -10,7 +10,7 @@
 | Project | Baseline Cost | Usage Cost | Total Cost |
 | :--- | :--- | :--- | :--- |
 | **terraform-dev** | $53.03 | - | **$53.03** |
-| **terraform-staging** | $53.03 | - | **$53.03** |
+| **terraform-Stage** | $53.03 | - | **$53.03** |
 | **terraform-prod** | $53.03 | - | **$53.03** |
 | **OVERALL TOTAL** | | | **$159.09** |
 
@@ -34,7 +34,7 @@
 
 ---
 
-## 🟠 Staging & Dev Environments
+## 🟠 Stage & Dev Environments
 **Total: $53.03/mo (per environment)**
 
 ### 🗄️ Databases

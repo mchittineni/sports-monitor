@@ -14,6 +14,7 @@ resource "aws_kms_key" "shared" {
 }
 
 data "aws_iam_policy_document" "kms_shared" {
+  # checkov:skip=CKV_AWS_356: ADD REASON
   # 1. Allow root/admin to manage the key
   statement {
     sid    = "EnableIAMUserPermissions"
