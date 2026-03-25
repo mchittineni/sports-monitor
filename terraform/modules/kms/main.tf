@@ -1,4 +1,6 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 
 resource "aws_kms_key" "shared" {
   description             = "Shared KMS key for ${var.environment} infrastructure"
@@ -39,7 +41,8 @@ data "aws_iam_policy_document" "kms_shared" {
         "sns.amazonaws.com",
         "cloudwatch.amazonaws.com",
         "lambda.amazonaws.com",
-        "apigateway.amazonaws.com"
+        "apigateway.amazonaws.com",
+        "logs.${data.aws_region.current.name}.amazonaws.com"
       ]
     }
     actions = [

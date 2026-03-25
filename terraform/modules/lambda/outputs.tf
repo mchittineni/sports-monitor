@@ -7,3 +7,8 @@ output "api_handler_invoke_arn" {
   value       = aws_lambda_function.api_handler.invoke_arn
   description = "The ARN used by API Gateway to grant permission to invoke the Lambda function."
 }
+
+output "lambda_role_name" {
+  value       = aws_iam_role.lambda_role.name
+  description = "The name of the IAM role assumed by the Lambda function."
+}

@@ -114,8 +114,8 @@ resource "aws_wafv2_web_acl" "frontend" {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 0
 
-    action {
-      block {}
+    override_action {
+      none {}
     }
 
     statement {
@@ -173,12 +173,6 @@ resource "aws_cloudfront_distribution" "frontend" {
     geo_restriction {
       restriction_type = "none"
     }
-  }
-
-  logging_config {
-    include_cookies = false
-    bucket          = aws_s3_bucket.frontend.bucket_domain_name
-    prefix          = "cloudfront/"
   }
 
   viewer_certificate {

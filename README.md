@@ -37,7 +37,7 @@ Welcome to **Sports Monitor**! A modern, highly available, and cloud-native web 
 | :-------------- | :------------------------------------------------------------------- |
 | **Frontend**    | React, Vite, TailwindCSS, React-Leaflet, Zustand                     |
 | **Backend**     | Node.js, Express, Socket.io, TypeScript                              |
-| **Databases**   | PostgreSQL (Relational), DynamoDB (Volatile Events), Redis (Caching) |
+| **Databases**   | PostgreSQL 17.5 (Relational), DynamoDB (Volatile Events), Redis (Caching) |
 | **Cloud (AWS)** | Lambda, API Gateway, CloudFront, S3, RDS, Bedrock                    |
 | **Infra (IaC)** | Terraform                                                            |
 

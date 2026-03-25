@@ -162,10 +162,10 @@ module "lambda_ingest_worker" {
 
 # AI Services (AWS Bedrock)
 module "ai_services" {
-  source          = "./modules/ai-services"
-  environment     = var.environment
-  vpc_id          = module.networking.vpc_id
-  lambda_role_arn = module.lambda_api.lambda_role_arn
+  source           = "./modules/ai-services"
+  environment      = var.environment
+  vpc_id           = module.networking.vpc_id
+  lambda_role_name = module.lambda_api.lambda_role_name
 }
 
 # ECR Container Registry
@@ -176,9 +176,10 @@ module "ecr" {
 
 # S3 for Frontend Hosting
 module "frontend" {
-  source               = "./modules/frontend"
-  environment          = var.environment
-  frontend_bucket_name = "sports-monitor-frontend-${var.environment}"
+  source      = "./modules/frontend"
+  environment = var.environment
+  # S3 bucket names must be lowercase and contain no invalid characters
+  frontend_bucket_name = "sports-monitor-frontend-${lower(var.environment)}"
   kms_key_arn          = module.kms.key_arn
 }
 
