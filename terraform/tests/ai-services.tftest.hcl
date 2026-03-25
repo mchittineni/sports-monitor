@@ -10,7 +10,7 @@ run "execute_ai_services_plan" {
   variables {
     environment     = "test"
     vpc_id          = "vpc-123456"
-    lambda_role_arn = "sports-lambda-role-test"
+    lambda_role_name = "my-test-role-name"
   }
 
   # Assertion 1: Verify Bedrock Enabled Output
