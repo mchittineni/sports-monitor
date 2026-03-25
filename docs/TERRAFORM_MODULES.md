@@ -26,7 +26,7 @@ Provisions a single, high-restriction **Customer Managed Key (CMK)** shared acro
 
 Key resources:
 - `aws_kms_key` — Consolidated key with `enable_key_rotation = true`.
-- `aws_iam_policy_document` — Hardened policy using `aws:SourceAccount` conditions to prevent "confused deputy" attacks.
+- `aws_iam_policy_document` — Hardened policy using `aws:SourceAccount` conditions to prevent "confused deputy" attacks, and explicitly granting `logs.<region>.amazonaws.com` to support CloudWatch Log Groups.
 - `aws_kms_alias` — Environment-specific alias (e.g., `alias/sports-monitor-shared-prod`).
 
 ---
@@ -44,7 +44,7 @@ Key resources:
 
 ### `databases`
 
-Provisions **RDS PostgreSQL** using ARM64 (`db.t4g.micro`) instances for optimal price-performance.
+Provisions **RDS PostgreSQL (v17.5)** using ARM64 (`db.t4g.micro`) instances for optimal price-performance.
 
 Key resources:
 - `aws_db_instance` — Encrypted storage and Performance Insights using the shared KMS key.
@@ -54,7 +54,7 @@ Key resources:
 
 ### `lambda`
 
-Packages and deploys Lambda functions with **VPC placement** and ARM64 architecture.
+Packages and deploys Lambda functions with **VPC placement** and ARM64 architecture. During initial infrastructure provisioning, a dummy package (`dummy_lambda.zip`) is dynamically generated via the `archive_file` data source to bypass deployment errors. The actual backend code is executed later via CI/CD.
 
 Key resources:
 - `aws_lambda_function` — Encrypted environment variables and VPC configuration.
@@ -67,18 +67,19 @@ Key resources:
 Connects the public internet to Lambda via **API Gateway v2 (HTTP API)**.
 
 Key resources:
-- `aws_apigatewayv2_api` — HTTP API with CORS enabled.
+- `aws_apigatewayv2_api` — HTTP API with dynamic CORS enabled. Notice `allow_credentials` is dynamically evaluated to avoid AWS constraint errors.
 - `aws_cloudwatch_log_group` — Access logs encrypted via the shared KMS key.
 
 ---
 
 ### `frontend`
 
-Hosts the React SPA on **S3 + CloudFront** with private bucket access via OAC.
+Hosts the React SPA on **S3 + CloudFront** with private bucket access via OAC. S3 bucket names are strictly enforced to lowercase. CloudFront standard logging is intentionally omitted to respect and maintain S3's modern `BucketOwnerEnforced` ACL-disabled security posture.
 
 Key resources:
 - `aws_s3_bucket` — Private bucket with SSE-KMS encryption.
 - `aws_cloudfront_origin_access_control` — Restricts bucket access solely to CloudFront.
+- `aws_wafv2_web_acl` — WAF protection utilizing an `override_action` block for AWS Managed Rule Groups.
 
 ---
 

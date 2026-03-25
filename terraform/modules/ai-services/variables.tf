@@ -8,7 +8,7 @@ variable "vpc_id" {
   description = "VPC boundary ID for network-constrained resources."
 }
 
-variable "lambda_role_arn" {
+variable "lambda_role_name" {
   type        = string
-  description = "The IAM role ARN of the Lambda function that requires access to AWS Bedrock AI models."
+  description = "The IAM role name of the Lambda function that requires access to AWS Bedrock AI models."
 }

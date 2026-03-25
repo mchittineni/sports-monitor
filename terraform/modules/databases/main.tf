@@ -1,5 +1,5 @@
 resource "aws_db_subnet_group" "postgres" {
-  name       = "sports-monitor-${var.environment}"
+  name       = "sports-monitor-${lower(var.environment)}"
   subnet_ids = var.subnet_ids
 
   tags = {
@@ -31,9 +31,10 @@ resource "aws_security_group" "rds_sg" {
 
 # RDS Database
 resource "aws_db_instance" "postgres" {
-  identifier                          = "sports-monitor-${var.environment}"
-  engine                              = "postgres"
-  engine_version                      = "15.3"
+  identifier = "sports-monitor-${lower(var.environment)}"
+  engine     = "postgres"
+
+  engine_version                      = "17.5"
   instance_class                      = var.environment == "prod" ? "db.t4g.medium" : "db.t4g.micro"
   allocated_storage                   = 20
   max_allocated_storage               = 100

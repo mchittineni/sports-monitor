@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Infrastructure Diagram</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #2d2d2d;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #232f3e;
+        }
+        .header .subtitle {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #8c4fff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .export-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .export-btn-primary {
+            background: #8c4fff;
+            color: white;
+        }
+        .export-btn-primary:hover {
+            background: #7a3de8;
+        }
+        .export-btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+        .export-btn-secondary:hover {
+            background: #dee2e6;
+        }
+        .diagram-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .toolbar-info {
+            font-size: 13px;
+            color: #666;
+        }
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .toolbar-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+        .diagram-wrapper {
+            padding: 10px;
+            overflow: visible;
+        }
+        .diagram-wrapper svg {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            height: auto;
+            max-height: none;
+        }
+        @media (max-width: 1200px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header-right {
+                flex-direction: column;
+                width: 100%;
+            }
+            .stats {
+                justify-content: center;
+            }
+            .export-buttons {
+                justify-content: center;
+            }
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .stats {
+                gap: 15px;
+            }
+            .stat-value {
+                font-size: 20px;
+            }
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .service.dragging {
+            opacity: 0.8;
+            cursor: grabbing !important;
+        }
+        .service:hover .service-bg {
+            stroke: #8c4fff;
+            stroke-width: 2;
+        }
+        /* Highlighting states */
+        .service.highlighted .service-bg {
+            stroke: #8c4fff;
+            stroke-width: 3;
+            filter: url(#shadow) drop-shadow(0 0 8px rgba(140, 79, 255, 0.5));
+        }
+        .service.dimmed {
+            opacity: 0.3;
+        }
+        .connection.highlighted .connection-path {
+            stroke-width: 3 !important;
+            opacity: 1 !important;
+        }
+        .connection.dimmed {
+            opacity: 0.1 !important;
+        }
+        .connection {
+            cursor: pointer;
+        }
+        .connection:hover .connection-path {
+            stroke-width: 3;
+            opacity: 1;
+        }
+        .connection-hitarea {
+            stroke: transparent;
+            stroke-width: 15;
+            fill: none;
+            cursor: pointer;
+        }
+        /* Spoke connection styles */
+        .spoke-connection {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .spoke-connection:hover .spoke-path {
+            stroke-width: 4 !important;
+            opacity: 1 !important;
+        }
+        .spoke-connection.highlighted .spoke-path {
+            stroke-width: 4 !important;
+            opacity: 1 !important;
+        }
+        .spoke-connection.dimmed {
+            opacity: 0.15 !important;
+        }
+        .spoke-hitarea {
+            stroke: transparent;
+            stroke-width: 20;
+            fill: none;
+            cursor: pointer;
+        }
+        /* Spoke rays - subtle lines from edge point to service icons */
+        .spoke-ray {
+            stroke: #bbb;
+            stroke-width: 1;
+            opacity: 0.3;
+            transition: opacity 0.2s, stroke 0.2s;
+        }
+        .spoke-rays.highlighted .spoke-ray {
+            opacity: 0.6;
+            stroke: #888;
+        }
+        .spoke-ray.highlighted {
+            opacity: 0.8 !important;
+            stroke: #666 !important;
+            stroke-width: 1.5 !important;
+        }
+        .spoke-ray.dimmed {
+            opacity: 0.1 !important;
+        }
+        .legend {
+            margin-top: 20px;
+            padding: 20px 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .legend h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #232f3e;
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .legend-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .legend-line {
+            width: 36px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+        .legend-line svg {
+            display: block;
+        }
+        .legend-box {
+            width: 24px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1.5px solid;
+        }
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .tooltip {
+            position: fixed;
+            padding: 10px 14px;
+            background: #232f3e;
+            color: white;
+            border-radius: 6px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .export-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .export-modal.active {
+            display: flex;
+        }
+        .export-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .export-modal h3 {
+            margin: 0 0 20px 0;
+        }
+        .export-preview {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .export-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .highlight-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #232f3e;
+            color: white;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            max-width: 280px;
+        }
+        .highlight-info strong {
+            color: #8c4fff;
+        }
+        .highlight-info small {
+            color: #999;
+            display: block;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        /* ============ AGGREGATION UI ============ */
+        .aggregation-panel {
+            margin-top: 15px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .aggregation-panel-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #232f3e;
+            margin-right: 5px;
+        }
+        .aggregation-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            border: 2px solid;
+        }
+        .aggregation-chip.active {
+            color: white;
+        }
+        .aggregation-chip.inactive {
+            background: transparent;
+        }
+        .aggregation-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .aggregation-chip .chip-check {
+            font-size: 11px;
+        }
+        /* Aggregate node styles */
+        .aggregate-node .service-bg {
+            stroke-dasharray: 6,3 !important;
+            stroke-width: 2 !important;
+        }
+        .aggregate-node {
+            cursor: pointer;
+        }
+        .aggregate-badge {
+            pointer-events: none;
+        }
+        /* Aggregate connection styles */
+        .aggregate-connection .connection-path {
+            opacity: 0.6;
+        }
+        .aggregate-connection .multiplicity-label {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            fill: #666;
+        }
+        /* Popover styles */
+        .aggregate-popover {
+            position: fixed;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            z-index: 1500;
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 220px;
+            padding: 8px 0;
+        }
+        .aggregate-popover-header {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 1px solid #eee;
+            text-transform: uppercase;
+        }
+        .aggregate-popover-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            transition: background 0.15s;
+        }
+        .aggregate-popover-item:hover {
+            background: #f5f5f5;
+        }
+        .aggregate-popover-item.selected {
+            background: #ede7f6;
+            color: #6200ea;
+            font-weight: 500;
+        }
+        .aggregate-popover-item svg {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        /* Transition animations for aggregation */
+        .service.agg-hidden {
+            display: none !important;
+        }
+        .connection.agg-hidden {
+            display: none !important;
+        }
+        .connection.conn-type-hidden {
+            display: none !important;
+        }
+        /* ============ CONNECTION TYPE FILTER UI ============ */
+        .conn-filter-panel {
+            margin-top: 15px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .conn-filter-panel-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #232f3e;
+            margin-right: 5px;
+        }
+        .conn-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            border: 2px solid;
+        }
+        .conn-filter-chip.active {
+            color: white;
+        }
+        .conn-filter-chip.inactive {
+            background: transparent;
+        }
+        .conn-filter-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .conn-filter-chip .chip-check {
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>AWS Infrastructure Diagram</h1>
+                <p class="subtitle">Environment:  | Drag icons to reposition</p>
+            </div>
+            <div class="header-right">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">26</div>
+                        <div class="stat-label">Services</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">26</div>
+                        <div class="stat-label">Resources</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">19</div>
+                        <div class="stat-label">Connections</div>
+                    </div>
+                </div>
+                <div class="export-buttons">
+                    <button class="export-btn export-btn-secondary" onclick="exportAs('png')">Export PNG</button>
+                    <button class="export-btn export-btn-primary" onclick="exportAs('jpg')">Export JPG</button>
+                </div>
+            </div>
+        </div>
+        <div class="diagram-container">
+            <div class="toolbar">
+                <div class="toolbar-info">Click and drag services to reposition. Connections update automatically.</div>
+                <div class="toolbar-actions">
+                    <button class="toolbar-btn" onclick="resetPositions()">Reset Layout</button>
+                    <button class="toolbar-btn" onclick="savePositions()">Save Layout</button>
+                    <button class="toolbar-btn" onclick="loadPositions()">Load Layout</button>
+                </div>
+            </div>
+            <div class="diagram-wrapper" id="diagram-wrapper">
+                <svg id="diagram-svg" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 1959 994"
+            width="100%" preserveAspectRatio="xMidYMin meet"
+            style="max-width: 1959px;">
+
+        <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7"
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#999"/>
+            </marker>
+            <marker id="arrowhead-data" markerWidth="10" markerHeight="7"
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#3B48CC"/>
+            </marker>
+            <marker id="arrowhead-trigger" markerWidth="10" markerHeight="7"
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#E7157B"/>
+            </marker>
+            <marker id="arrowhead-network" markerWidth="10" markerHeight="7"
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#0d7c3f"/>
+            </marker>
+            <marker id="arrowhead-security" markerWidth="10" markerHeight="7"
+                refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+            </marker>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+            </filter>
+        </defs>
+        
+<rect width="100%" height="100%" fill="#f8f9fa"/>
+
+        <g class="group group-aws_cloud" data-group-type="aws_cloud">
+            <rect class="group-bg" x="42" y="42" width="1875" height="932"
+                fill="#ffffff" stroke="#232f3e" stroke-width="2"
+                stroke-dasharray="8,4" rx="12" ry="12"
+                data-min-x="42" data-min-y="42"
+                data-max-x="1917" data-max-y="974"/>
+            <text x="57" y="64"
+                font-family="Arial, sans-serif" font-size="14" font-weight="bold"
+                fill="#232f3e">AWS Cloud</text>
+        </g>
+        
+
+        <g class="group group-vpc" data-group-type="vpc">
+            <rect class="group-bg" x="92" y="242" width="1775" height="414"
+                fill="#faf8ff" stroke="#8c4fff" stroke-width="2"
+                stroke-dasharray="8,4" rx="12" ry="12"
+                data-min-x="92" data-min-y="242"
+                data-max-x="1867" data-max-y="656"/>
+            <text x="107" y="264"
+                font-family="Arial, sans-serif" font-size="14" font-weight="bold"
+                fill="#8c4fff">VPC</text>
+        </g>
+        
+
+        <g class="group group-az" data-group-type="az">
+            <rect class="az-bg" x="107" y="446" width="1655.0" height="190"
+                fill="#fff8f0" stroke="#ff9900" stroke-width="1.5"
+                stroke-dasharray="5,3" rx="8" ry="8"/>
+            <text x="117" y="464"
+                font-family="Arial, sans-serif" font-size="12" font-weight="bold"
+                fill="#ff9900">AZ 1c</text>
+        </g>
+        
+<g id="subnets-layer">
+
+        <g class="subnet subnet-public" data-subnet-id="networking.aws_subnet.public"
+            data-min-x="117" data-min-y="476"
+            data-max-x="1752.0" data-max-y="536">
+            <rect x="117" y="476" width="1635.0" height="60"
+                fill="#e3fcef" stroke="#22a06b" stroke-width="1.5" rx="4" ry="4"/>
+            <text x="125" y="510.0"
+                font-family="Arial, sans-serif" font-size="11" fill="#22a06b">
+                public
+            </text>
+            <text x="1744.0" y="510.0"
+                font-family="Arial, sans-serif" font-size="10" fill="#22a06b"
+                text-anchor="end" opacity="0.7">
+                10.0.${count.index * 10 + 0}.0/24
+            </text>
+        </g>
+        
+
+        <g class="subnet subnet-private" data-subnet-id="networking.aws_subnet.private"
+            data-min-x="117" data-min-y="546"
+            data-max-x="1752.0" data-max-y="606">
+            <rect x="117" y="546" width="1635.0" height="60"
+                fill="#deebff" stroke="#0052cc" stroke-width="1.5" rx="4" ry="4"/>
+            <text x="125" y="580.0"
+                font-family="Arial, sans-serif" font-size="11" fill="#0052cc">
+                private
+            </text>
+            <text x="1744.0" y="580.0"
+                font-family="Arial, sans-serif" font-size="10" fill="#0052cc"
+                text-anchor="end" opacity="0.7">
+                10.0.${count.index * 10 + 1}.0/24
+            </text>
+        </g>
+        
+</g>
+<g id="connections-layer">
+
+        <g class="connection" data-source="frontend.aws_cloudfront_distribution.frontend"
+           data-target="frontend.aws_s3_bucket.frontend"
+           data-source-type="cloudfront"
+           data-target-type="s3"
+           data-conn-type="default"
+           data-label="">
+            <path class="connection-hitarea" d="M 854.5 126.5 Q 591.25 126.5, 591.25 433.5 T 328 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 854.5 126.5 Q 591.25 126.5, 591.25 433.5 T 328 740.5" fill="none" stroke="#999999"
+                stroke-width="1.5"  marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="frontend.aws_cloudfront_distribution.frontend"
+           data-target="frontend.aws_wafv2_web_acl.frontend"
+           data-source-type="cloudfront"
+           data-target-type="waf"
+           data-conn-type="default"
+           data-label="">
+            <path class="connection-hitarea" d="M 959.5 126.5 Q 998.0 126.5, 998.0 126.5 T 1036.5 126.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 959.5 126.5 Q 998.0 126.5, 998.0 126.5 T 1036.5 126.5" fill="none" stroke="#999999"
+                stroke-width="1.5"  marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="frontend.aws_wafv2_web_acl.frontend"
+           data-target="frontend.aws_cloudfront_distribution.frontend"
+           data-source-type="waf"
+           data-target-type="cloudfront"
+           data-conn-type="default"
+           data-label="Protect">
+            <path class="connection-hitarea" d="M 1036.5 126.5 Q 998.0 126.5, 998.0 126.5 T 959.5 126.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 1036.5 126.5 Q 998.0 126.5, 998.0 126.5 T 959.5 126.5" fill="none" stroke="#999999"
+                stroke-width="1.5"  marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_api.aws_lambda_function.api_handler"
+           data-target="aws_dynamodb_table.sports_events"
+           data-source-type="lambda"
+           data-target-type="dynamodb"
+           data-conn-type="data_flow"
+           data-label="Read/Write">
+            <path class="connection-hitarea" d="M 362 879.5 Q 275.5 879.5, 275.5 810.0 T 189 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 362 879.5 Q 275.5 879.5, 275.5 810.0 T 189 740.5" fill="none" stroke="#3B48CC"
+                stroke-width="1.5"  marker-end="url(#arrowhead-data)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-target="aws_dynamodb_table.sports_events"
+           data-source-type="lambda"
+           data-target-type="dynamodb"
+           data-conn-type="data_flow"
+           data-label="Read/Write">
+            <path class="connection-hitarea" d="M 501 879.5 Q 345.0 879.5, 345.0 810.0 T 189 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 501 879.5 Q 345.0 879.5, 345.0 810.0 T 189 740.5" fill="none" stroke="#3B48CC"
+                stroke-width="1.5"  marker-end="url(#arrowhead-data)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_api.aws_lambda_function.api_handler"
+           data-target="frontend.aws_s3_bucket.frontend"
+           data-source-type="lambda"
+           data-target-type="s3"
+           data-conn-type="data_flow"
+           data-label="Read/Write">
+            <path class="connection-hitarea" d="M 362 879.5 Q 345.0 879.5, 345.0 810.0 T 328 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 362 879.5 Q 345.0 879.5, 345.0 810.0 T 328 740.5" fill="none" stroke="#3B48CC"
+                stroke-width="1.5"  marker-end="url(#arrowhead-data)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-target="frontend.aws_s3_bucket.frontend"
+           data-source-type="lambda"
+           data-target-type="s3"
+           data-conn-type="data_flow"
+           data-label="Read/Write">
+            <path class="connection-hitarea" d="M 501 879.5 Q 414.5 879.5, 414.5 810.0 T 328 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 501 879.5 Q 414.5 879.5, 414.5 810.0 T 328 740.5" fill="none" stroke="#3B48CC"
+                stroke-width="1.5"  marker-end="url(#arrowhead-data)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="monitoring.aws_sns_topic.alerts"
+           data-target="lambda_api.aws_lambda_function.api_handler"
+           data-source-type="sns"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 640 740.5 Q 553.5 740.5, 553.5 810.0 T 467 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 640 740.5 Q 553.5 740.5, 553.5 810.0 T 467 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="monitoring.aws_sns_topic.alerts"
+           data-target="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-source-type="sns"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 640 740.5 Q 623.0 740.5, 623.0 810.0 T 606 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 640 740.5 Q 623.0 740.5, 623.0 810.0 T 606 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_api.aws_cloudwatch_event_rule.lambda_cron"
+           data-target="lambda_api.aws_lambda_function.api_handler"
+           data-source-type="eventbridge"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 414.5 793 Q 414.5 793, 414.5 810.0 T 414.5 827" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 414.5 793 Q 414.5 793, 414.5 810.0 T 414.5 827" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_api.aws_cloudwatch_event_rule.lambda_cron"
+           data-target="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-source-type="eventbridge"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 467 740.5 Q 484.0 740.5, 484.0 810.0 T 501 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 467 740.5 Q 484.0 740.5, 484.0 810.0 T 501 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_ingest_worker.aws_cloudwatch_event_rule.lambda_cron"
+           data-target="lambda_api.aws_lambda_function.api_handler"
+           data-source-type="eventbridge"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 501 740.5 Q 484.0 740.5, 484.0 810.0 T 467 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 501 740.5 Q 484.0 740.5, 484.0 810.0 T 467 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="lambda_ingest_worker.aws_cloudwatch_event_rule.lambda_cron"
+           data-target="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-source-type="eventbridge"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Trigger">
+            <path class="connection-hitarea" d="M 553.5 793 Q 553.5 793, 553.5 810.0 T 553.5 827" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 553.5 793 Q 553.5 793, 553.5 810.0 T 553.5 827" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="kms.aws_kms_key.shared"
+           data-target="frontend.aws_s3_bucket.frontend"
+           data-source-type="kms"
+           data-target-type="s3"
+           data-conn-type="encrypt"
+           data-label="Encrypt">
+            <path class="connection-hitarea" d="M 779 740.5 Q 553.5 740.5, 553.5 740.5 T 328 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 779 740.5 Q 553.5 740.5, 553.5 740.5 T 328 740.5" fill="none" stroke="#6c757d"
+                stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="kms.aws_kms_key.shared"
+           data-target="aws_dynamodb_table.sports_events"
+           data-source-type="kms"
+           data-target-type="dynamodb"
+           data-conn-type="encrypt"
+           data-label="Encrypt">
+            <path class="connection-hitarea" d="M 779 740.5 Q 484.0 740.5, 484.0 740.5 T 189 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 779 740.5 Q 484.0 740.5, 484.0 740.5 T 189 740.5" fill="none" stroke="#6c757d"
+                stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="kms.aws_kms_key.shared"
+           data-target="monitoring.aws_sns_topic.alerts"
+           data-source-type="kms"
+           data-target-type="sns"
+           data-conn-type="encrypt"
+           data-label="Encrypt">
+            <path class="connection-hitarea" d="M 779 740.5 Q 762.0 740.5, 762.0 740.5 T 745 740.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 779 740.5 Q 762.0 740.5, 762.0 740.5 T 745 740.5" fill="none" stroke="#6c757d"
+                stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowhead)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="api_gateway.aws_apigatewayv2_api.main"
+           data-target="lambda_api.aws_lambda_function.api_handler"
+           data-source-type="api_gateway"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Invoke">
+            <path class="connection-hitarea" d="M 328 879.5 Q 345.0 879.5, 345.0 879.5 T 362 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 328 879.5 Q 345.0 879.5, 345.0 879.5 T 362 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+
+        <g class="connection" data-source="api_gateway.aws_apigatewayv2_api.main"
+           data-target="lambda_ingest_worker.aws_lambda_function.api_handler"
+           data-source-type="api_gateway"
+           data-target-type="lambda"
+           data-conn-type="trigger"
+           data-label="Invoke">
+            <path class="connection-hitarea" d="M 328 879.5 Q 414.5 879.5, 414.5 879.5 T 501 879.5" fill="none" stroke="transparent" stroke-width="15"/>
+            <path class="connection-path" d="M 328 879.5 Q 414.5 879.5, 414.5 879.5 T 501 879.5" fill="none" stroke="#E7157B"
+                stroke-width="1.5"  marker-end="url(#arrowhead-trigger)" opacity="0.7"/>
+        </g>
+        
+</g>
+<g id="endpoints-layer">
+</g>
+<g id="services-layer">
+
+            <g class="service draggable" data-service-id="aws_dynamodb_table.sports_events"
+               data-service-type="dynamodb"
+               data-tooltip="Sports Events (1 resources)" data-is-vpc="false" 
+               transform="translate(92, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#3B48CC" fill-opacity="0.15" stroke="#3B48CC" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#3B48CC">DYN</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Sports Events
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="kms.aws_kms_key.shared"
+               data-service-type="kms"
+               data-tooltip="Shared (1 resources)" data-is-vpc="false" 
+               transform="translate(787, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">KMS</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Shared
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="networking.aws_cloudwatch_log_group.vpc_flow_logs"
+               data-service-type="cloudwatch"
+               data-tooltip="Vpc Flow Logs (1 resources)" data-is-vpc="false" 
+               transform="translate(1482, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">CLO</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Vpc Flow Logs
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="api_gateway.aws_cloudwatch_log_group.api_gateway_logs"
+               data-service-type="cloudwatch"
+               data-tooltip="Api Gateway Logs (1 resources)" data-is-vpc="false" 
+               transform="translate(1621, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">CLO</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Api Gateway Logs
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="monitoring.aws_cloudwatch_log_group.api_logs"
+               data-service-type="cloudwatch"
+               data-tooltip="Api Logs (1 resources)" data-is-vpc="false" 
+               transform="translate(92, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">CLO</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Api Logs
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="networking.aws_iam_role.vpc_flow_log_role"
+               data-service-type="iam"
+               data-tooltip="Vpc Flow Log Role (1 resources)" data-is-vpc="false" 
+               transform="translate(926, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">IAM</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Vpc Flow Log Role
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="api_gateway.aws_iam_role.api_gateway_cloudwatch"
+               data-service-type="iam"
+               data-tooltip="Api Gateway Cloud... (1 resources)" data-is-vpc="false" 
+               transform="translate(1065, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">IAM</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Api Gateway Cloud...
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_api.aws_iam_role.lambda_role"
+               data-service-type="iam"
+               data-tooltip="Lambda Role (1 resources)" data-is-vpc="false" 
+               transform="translate(1204, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">IAM</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Role
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_ingest_worker.aws_iam_role.lambda_role"
+               data-service-type="iam"
+               data-tooltip="Lambda Role (1 resources)" data-is-vpc="false" 
+               transform="translate(1343, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">IAM</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Role
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="networking.aws_internet_gateway.main"
+               data-service-type="internet_gateway"
+               data-tooltip="Main (1 resources)" data-is-vpc="true" 
+               transform="translate(717.5, 307)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+    <title>Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_Internet-Gateway_48</title>
+    <g id="Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_Internet-Gateway_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M33.4312,35.1778 L31.9332,35.1778 L31.9332,17.5018 C31.9332,17.1088 31.7022,16.7518 31.3442,16.5908 L31.2522,16.5488 C29.2432,15.6418 27.1642,14.7028 24.1762,14.7028 C21.0532,14.7028 18.7612,15.7118 16.4952,16.8368 C16.1552,17.0058 15.9402,17.3528 15.9402,17.7328 L15.9402,35.1778 L14.4772,35.1778 L14.4772,16.3118 C16.9112,14.3328 20.4202,13.2048 24.1862,13.2048 C27.6872,13.2048 31.0252,14.2018 33.4312,15.9528 L33.4312,35.1778 Z M24.1862,11.2048 C19.7612,11.2048 15.6172,12.6238 12.8152,15.0998 C12.6002,15.2888 12.4772,15.5618 12.4772,15.8488 L12.4772,36.1778 C12.4772,36.7308 12.9242,37.1778 13.4772,37.1778 L16.9402,37.1778 C17.4932,37.1778 17.9402,36.7308 17.9402,36.1778 L17.9402,18.3558 C19.8592,17.4288 21.7192,16.7028 24.1762,16.7028 C26.5112,16.7028 28.2092,17.3778 29.9332,18.1488 L29.9332,36.1778 C29.9332,36.7308 30.3802,37.1778 30.9332,37.1778 L34.4312,37.1778 C34.9842,37.1778 35.4312,36.7308 35.4312,36.1778 L35.4312,15.4578 C35.4312,15.1538 35.2922,14.8658 35.0532,14.6748 C32.2792,12.4698 28.3182,11.2048 24.1862,11.2048 L24.1862,11.2048 Z M23.9542,43.9088 C12.9522,43.9088 3.9992,34.9568 3.9992,23.9538 C3.9992,12.9508 12.9522,3.9998 23.9542,3.9998 C34.9572,3.9998 43.9092,12.9508 43.9092,23.9538 C43.9092,34.9568 34.9572,43.9088 23.9542,43.9088 L23.9542,43.9088 Z M23.9542,1.9998 C11.8482,1.9998 1.9992,11.8488 1.9992,23.9538 C1.9992,36.0608 11.8482,45.9088 23.9542,45.9088 C36.0602,45.9088 45.9092,36.0608 45.9092,23.9538 C45.9092,11.8488 36.0602,1.9998 23.9542,1.9998 L23.9542,1.9998 Z" id="AWS-Amazon-VPC_Internet-gateway_Resource-Icon_light-bg" fill="#8C4FFF"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Main
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="databases.aws_db_instance.postgres"
+               data-service-type="rds"
+               data-tooltip="Postgres (1 resources)" data-is-vpc="true" 
+               transform="translate(92, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#3B48CC" fill-opacity="0.15" stroke="#3B48CC" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#3B48CC">RDS</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Postgres
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="databases.aws_security_group.rds_sg"
+               data-service-type="security_groups"
+               data-tooltip="Rds Sg (1 resources)" data-is-vpc="true" 
+               transform="translate(899.5, 307)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+    <title>Icon-Resource/General-Resource/Res_Firewall_48_Light</title>
+    <g id="Icon-Resource/General-Resource/Res_Firewall_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M34.912,36.0124 L43.986,36.0124 L43.986,32.2824 L34.912,32.2824 L34.912,36.0124 Z M33.637,38.0134 L26.844,38.0134 L26.844,41.0884 L35.812,41.0884 L35.812,38.0134 L33.911,38.0134 L33.637,38.0134 Z M23.108,36.0134 L32.912,36.0134 L32.912,32.2834 L23.108,32.2834 L23.108,36.0134 Z M33.911,30.2824 L39.882,30.2824 L39.882,26.3294 L30.913,26.3294 L30.913,30.2824 L33.637,30.2824 L33.911,30.2824 Z M45.986,31.2824 L45.986,37.0134 C45.986,37.5654 45.538,38.0134 44.986,38.0134 L37.812,38.0134 L37.812,42.0884 C37.812,42.6404 37.364,43.0884 36.812,43.0884 L25.844,43.0884 C25.291,43.0884 24.844,42.6404 24.844,42.0884 L24.844,38.0134 L22.108,38.0134 C21.555,38.0134 21.108,37.5654 21.108,37.0134 L21.108,31.2824 C21.108,30.7294 21.555,30.2824 22.108,30.2824 L28.913,30.2824 L28.913,25.3294 C28.913,24.7764 29.361,24.3294 29.913,24.3294 L40.882,24.3294 C41.435,24.3294 41.882,24.7764 41.882,25.3294 L41.882,30.2824 L44.986,30.2824 C45.538,30.2824 45.986,30.7294 45.986,31.2824 L45.986,31.2824 Z M23.587,24.7044 C23.522,25.1124 23.713,25.5184 24.07,25.7274 C24.425,25.9364 24.875,25.9034 25.197,25.6464 C25.294,25.5694 27.281,23.9424 28.158,19.9594 C28.554,20.4704 28.978,21.1794 29.308,22.1344 L31.198,21.4814 C30.096,18.2904 28.031,17.1394 27.945,17.0914 C27.649,16.9314 27.297,16.9294 27.001,17.0854 C26.706,17.2404 26.507,17.5334 26.473,17.8654 C26.348,19.0544 26.111,20.0504 25.831,20.8714 C25.419,10.4424 16.37,6.8834 16.268,6.8444 C15.802,6.6684 15.279,6.8614 15.037,7.2974 C14.797,7.7324 14.914,8.2784 15.312,8.5784 C18.096,10.6774 19.366,14.2324 18.804,18.2914 L18.567,19.5854 C18.225,21.0784 17.655,22.5424 16.851,23.9734 L16.156,25.3504 C12.763,32.8974 15.634,40.4644 15.758,40.7824 C15.908,41.1694 16.279,41.4204 16.69,41.4204 C16.715,41.4204 16.74,41.4194 16.767,41.4174 C16.818,41.4134 18.028,41.3164 19.736,40.9134 L19.275,38.9674 C18.511,39.1474 17.854,39.2614 17.384,39.3294 C16.798,37.3514 15.506,31.6734 17.961,26.2124 L18.615,24.9154 C19.492,23.3544 20.132,21.7114 20.525,19.9894 L20.778,18.6104 C21.112,16.1984 20.896,13.9364 20.175,11.9584 C22.488,14.4104 24.601,18.4454 23.587,24.7044 L23.587,24.7044 Z M12.408,7.5114 C11.928,7.2614 11.197,7.0354 10.497,6.9994 C12.099,9.0514 14.384,13.3844 12.09,19.6854 C11.956,20.0544 11.62,20.3094 11.23,20.3404 C10.847,20.3824 10.468,20.1724 10.277,19.8304 C9.657,18.7194 7.914,16.1994 5.989,15.2134 C6.658,17.6494 7.412,22.0714 5.316,25.2544 C5.212,25.4124 5.113,25.5704 5.021,25.7284 C3.187,28.8524 3.816,32.6804 6.623,35.4774 C6.63,35.4844 7.322,36.1574 9.117,37.1924 C11.328,38.4694 12.195,38.8444 12.204,38.8474 L11.426,40.6894 C11.388,40.6734 10.469,40.2824 8.117,38.9254 C6.086,37.7534 5.29,36.9734 5.206,36.8894 C1.791,33.4854 1.022,28.5914 3.296,24.7164 C3.406,24.5274 3.523,24.3404 3.646,24.1534 C6.05,20.5044 3.578,14.2424 3.553,14.1804 C3.429,13.8714 3.466,13.5214 3.653,13.2474 C3.838,12.9724 4.149,12.8074 4.481,12.8074 C7.148,12.8074 9.453,15.2174 10.792,16.9974 C12.143,10.6794 8.165,7.3554 7.979,7.2044 C7.728,7.0004 7.589,6.6854 7.61,6.3634 C7.63,6.0404 7.803,5.7464 8.078,5.5754 C9.625,4.6164 11.885,4.9854 13.33,5.7354 L12.408,7.5114 Z" id="Amazon-Firewall_Resource-Icon_light-bg" fill="#242F3E"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Rds Sg
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_api.aws_security_group.lambda_sg"
+               data-service-type="security_groups"
+               data-tooltip="Lambda Sg (1 resources)" data-is-vpc="true" 
+               transform="translate(1081.5, 307)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+    <title>Icon-Resource/General-Resource/Res_Firewall_48_Light</title>
+    <g id="Icon-Resource/General-Resource/Res_Firewall_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M34.912,36.0124 L43.986,36.0124 L43.986,32.2824 L34.912,32.2824 L34.912,36.0124 Z M33.637,38.0134 L26.844,38.0134 L26.844,41.0884 L35.812,41.0884 L35.812,38.0134 L33.911,38.0134 L33.637,38.0134 Z M23.108,36.0134 L32.912,36.0134 L32.912,32.2834 L23.108,32.2834 L23.108,36.0134 Z M33.911,30.2824 L39.882,30.2824 L39.882,26.3294 L30.913,26.3294 L30.913,30.2824 L33.637,30.2824 L33.911,30.2824 Z M45.986,31.2824 L45.986,37.0134 C45.986,37.5654 45.538,38.0134 44.986,38.0134 L37.812,38.0134 L37.812,42.0884 C37.812,42.6404 37.364,43.0884 36.812,43.0884 L25.844,43.0884 C25.291,43.0884 24.844,42.6404 24.844,42.0884 L24.844,38.0134 L22.108,38.0134 C21.555,38.0134 21.108,37.5654 21.108,37.0134 L21.108,31.2824 C21.108,30.7294 21.555,30.2824 22.108,30.2824 L28.913,30.2824 L28.913,25.3294 C28.913,24.7764 29.361,24.3294 29.913,24.3294 L40.882,24.3294 C41.435,24.3294 41.882,24.7764 41.882,25.3294 L41.882,30.2824 L44.986,30.2824 C45.538,30.2824 45.986,30.7294 45.986,31.2824 L45.986,31.2824 Z M23.587,24.7044 C23.522,25.1124 23.713,25.5184 24.07,25.7274 C24.425,25.9364 24.875,25.9034 25.197,25.6464 C25.294,25.5694 27.281,23.9424 28.158,19.9594 C28.554,20.4704 28.978,21.1794 29.308,22.1344 L31.198,21.4814 C30.096,18.2904 28.031,17.1394 27.945,17.0914 C27.649,16.9314 27.297,16.9294 27.001,17.0854 C26.706,17.2404 26.507,17.5334 26.473,17.8654 C26.348,19.0544 26.111,20.0504 25.831,20.8714 C25.419,10.4424 16.37,6.8834 16.268,6.8444 C15.802,6.6684 15.279,6.8614 15.037,7.2974 C14.797,7.7324 14.914,8.2784 15.312,8.5784 C18.096,10.6774 19.366,14.2324 18.804,18.2914 L18.567,19.5854 C18.225,21.0784 17.655,22.5424 16.851,23.9734 L16.156,25.3504 C12.763,32.8974 15.634,40.4644 15.758,40.7824 C15.908,41.1694 16.279,41.4204 16.69,41.4204 C16.715,41.4204 16.74,41.4194 16.767,41.4174 C16.818,41.4134 18.028,41.3164 19.736,40.9134 L19.275,38.9674 C18.511,39.1474 17.854,39.2614 17.384,39.3294 C16.798,37.3514 15.506,31.6734 17.961,26.2124 L18.615,24.9154 C19.492,23.3544 20.132,21.7114 20.525,19.9894 L20.778,18.6104 C21.112,16.1984 20.896,13.9364 20.175,11.9584 C22.488,14.4104 24.601,18.4454 23.587,24.7044 L23.587,24.7044 Z M12.408,7.5114 C11.928,7.2614 11.197,7.0354 10.497,6.9994 C12.099,9.0514 14.384,13.3844 12.09,19.6854 C11.956,20.0544 11.62,20.3094 11.23,20.3404 C10.847,20.3824 10.468,20.1724 10.277,19.8304 C9.657,18.7194 7.914,16.1994 5.989,15.2134 C6.658,17.6494 7.412,22.0714 5.316,25.2544 C5.212,25.4124 5.113,25.5704 5.021,25.7284 C3.187,28.8524 3.816,32.6804 6.623,35.4774 C6.63,35.4844 7.322,36.1574 9.117,37.1924 C11.328,38.4694 12.195,38.8444 12.204,38.8474 L11.426,40.6894 C11.388,40.6734 10.469,40.2824 8.117,38.9254 C6.086,37.7534 5.29,36.9734 5.206,36.8894 C1.791,33.4854 1.022,28.5914 3.296,24.7164 C3.406,24.5274 3.523,24.3404 3.646,24.1534 C6.05,20.5044 3.578,14.2424 3.553,14.1804 C3.429,13.8714 3.466,13.5214 3.653,13.2474 C3.838,12.9724 4.149,12.8074 4.481,12.8074 C7.148,12.8074 9.453,15.2174 10.792,16.9974 C12.143,10.6794 8.165,7.3554 7.979,7.2044 C7.728,7.0004 7.589,6.6854 7.61,6.3634 C7.63,6.0404 7.803,5.7464 8.078,5.5754 C9.625,4.6164 11.885,4.9854 13.33,5.7354 L12.408,7.5114 Z" id="Amazon-Firewall_Resource-Icon_light-bg" fill="#242F3E"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Sg
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_ingest_worker.aws_security_group.lambda_sg"
+               data-service-type="security_groups"
+               data-tooltip="Lambda Sg (1 resources)" data-is-vpc="true" 
+               transform="translate(1263.5, 307)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+    <title>Icon-Resource/General-Resource/Res_Firewall_48_Light</title>
+    <g id="Icon-Resource/General-Resource/Res_Firewall_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M34.912,36.0124 L43.986,36.0124 L43.986,32.2824 L34.912,32.2824 L34.912,36.0124 Z M33.637,38.0134 L26.844,38.0134 L26.844,41.0884 L35.812,41.0884 L35.812,38.0134 L33.911,38.0134 L33.637,38.0134 Z M23.108,36.0134 L32.912,36.0134 L32.912,32.2834 L23.108,32.2834 L23.108,36.0134 Z M33.911,30.2824 L39.882,30.2824 L39.882,26.3294 L30.913,26.3294 L30.913,30.2824 L33.637,30.2824 L33.911,30.2824 Z M45.986,31.2824 L45.986,37.0134 C45.986,37.5654 45.538,38.0134 44.986,38.0134 L37.812,38.0134 L37.812,42.0884 C37.812,42.6404 37.364,43.0884 36.812,43.0884 L25.844,43.0884 C25.291,43.0884 24.844,42.6404 24.844,42.0884 L24.844,38.0134 L22.108,38.0134 C21.555,38.0134 21.108,37.5654 21.108,37.0134 L21.108,31.2824 C21.108,30.7294 21.555,30.2824 22.108,30.2824 L28.913,30.2824 L28.913,25.3294 C28.913,24.7764 29.361,24.3294 29.913,24.3294 L40.882,24.3294 C41.435,24.3294 41.882,24.7764 41.882,25.3294 L41.882,30.2824 L44.986,30.2824 C45.538,30.2824 45.986,30.7294 45.986,31.2824 L45.986,31.2824 Z M23.587,24.7044 C23.522,25.1124 23.713,25.5184 24.07,25.7274 C24.425,25.9364 24.875,25.9034 25.197,25.6464 C25.294,25.5694 27.281,23.9424 28.158,19.9594 C28.554,20.4704 28.978,21.1794 29.308,22.1344 L31.198,21.4814 C30.096,18.2904 28.031,17.1394 27.945,17.0914 C27.649,16.9314 27.297,16.9294 27.001,17.0854 C26.706,17.2404 26.507,17.5334 26.473,17.8654 C26.348,19.0544 26.111,20.0504 25.831,20.8714 C25.419,10.4424 16.37,6.8834 16.268,6.8444 C15.802,6.6684 15.279,6.8614 15.037,7.2974 C14.797,7.7324 14.914,8.2784 15.312,8.5784 C18.096,10.6774 19.366,14.2324 18.804,18.2914 L18.567,19.5854 C18.225,21.0784 17.655,22.5424 16.851,23.9734 L16.156,25.3504 C12.763,32.8974 15.634,40.4644 15.758,40.7824 C15.908,41.1694 16.279,41.4204 16.69,41.4204 C16.715,41.4204 16.74,41.4194 16.767,41.4174 C16.818,41.4134 18.028,41.3164 19.736,40.9134 L19.275,38.9674 C18.511,39.1474 17.854,39.2614 17.384,39.3294 C16.798,37.3514 15.506,31.6734 17.961,26.2124 L18.615,24.9154 C19.492,23.3544 20.132,21.7114 20.525,19.9894 L20.778,18.6104 C21.112,16.1984 20.896,13.9364 20.175,11.9584 C22.488,14.4104 24.601,18.4454 23.587,24.7044 L23.587,24.7044 Z M12.408,7.5114 C11.928,7.2614 11.197,7.0354 10.497,6.9994 C12.099,9.0514 14.384,13.3844 12.09,19.6854 C11.956,20.0544 11.62,20.3094 11.23,20.3404 C10.847,20.3824 10.468,20.1724 10.277,19.8304 C9.657,18.7194 7.914,16.1994 5.989,15.2134 C6.658,17.6494 7.412,22.0714 5.316,25.2544 C5.212,25.4124 5.113,25.5704 5.021,25.7284 C3.187,28.8524 3.816,32.6804 6.623,35.4774 C6.63,35.4844 7.322,36.1574 9.117,37.1924 C11.328,38.4694 12.195,38.8444 12.204,38.8474 L11.426,40.6894 C11.388,40.6734 10.469,40.2824 8.117,38.9254 C6.086,37.7534 5.29,36.9734 5.206,36.8894 C1.791,33.4854 1.022,28.5914 3.296,24.7164 C3.406,24.5274 3.523,24.3404 3.646,24.1534 C6.05,20.5044 3.578,14.2424 3.553,14.1804 C3.429,13.8714 3.466,13.5214 3.653,13.2474 C3.838,12.9724 4.149,12.8074 4.481,12.8074 C7.148,12.8074 9.453,15.2174 10.792,16.9974 C12.143,10.6794 8.165,7.3554 7.979,7.2044 C7.728,7.0004 7.589,6.6854 7.61,6.3634 C7.63,6.0404 7.803,5.7464 8.078,5.5754 C9.625,4.6164 11.885,4.9854 13.33,5.7354 L12.408,7.5114 Z" id="Amazon-Firewall_Resource-Icon_light-bg" fill="#242F3E"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Sg
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="api_gateway.aws_apigatewayv2_api.main"
+               data-service-type="api_gateway"
+               data-tooltip="Main (1 resources)" data-is-vpc="false" 
+               transform="translate(231, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+<g id="Icon-Architecture/48/Arch_Amazon-API-Gateway_48">
+<g id="Icon-Architecture-BG/48/Networking-Content-Delivery">
+<rect id="Rectangle" width="64" height="64" fill="#8C4FFF"/>
+</g>
+<g id="Icon-Service/48/Amazon-API-Gateway_48">
+<path id="Amazon-API-Gateway_Icon_48_Squid" fill-rule="evenodd" clip-rule="evenodd" d="M28 43.9999H31V41.9999H28V43.9999ZM33 43.9999H36V41.9999H33V43.9999ZM28 21.9998H31V19.9998H28V21.9998ZM33 21.9998H36V19.9998H33V21.9998ZM22 12.7408L12 18.5738V46.382L22 51.382V12.7408ZM24 19.9998H26V21.9998H24V41.9999H26V43.9999H24V53C24 53.347 23.82 53.668 23.525 53.851C23.365 53.95 23.183 54 23 54C22.847 54 22.694 53.965 22.553 53.895L10.553 47.895C10.214 47.725 10 47.379 10 47V17.9998C10 17.6448 10.188 17.3148 10.496 17.1358L22.496 10.1358C22.805 9.95575 23.188 9.95475 23.498 10.1328C23.809 10.3108 24 10.6418 24 10.9998V19.9998ZM52 18.5738L42 12.7408V51.382L52 46.382V18.5738ZM54 17.9998V47C54 47.379 53.786 47.725 53.447 47.895L41.447 53.895C41.306 53.965 41.153 54 41 54C40.817 54 40.635 53.95 40.475 53.851C40.18 53.668 40 53.347 40 53V43.9999H38V41.9999H40V21.9998H38V19.9998H40V10.9998C40 10.6418 40.191 10.3108 40.502 10.1328C40.812 9.95575 41.195 9.95575 41.504 10.1358L53.504 17.1358C53.812 17.3148 54 17.6448 54 17.9998ZM34.939 27.3419L33.061 26.6578L29.061 37.6579L30.939 38.3419L34.939 27.3419ZM39.707 32.7069C40.098 32.3159 40.098 31.6839 39.707 31.2929L36.707 28.2929L35.293 29.7069L37.586 31.9999L35.293 34.2929L36.707 35.7069L39.707 32.7069ZM27.293 35.7069L24.293 32.7069C23.902 32.3159 23.902 31.6839 24.293 31.2929L27.293 28.2929L28.707 29.7069L26.414 31.9999L28.707 34.2929L27.293 35.7069Z" fill="white"/>
+</g>
+</g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Main
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_api.aws_lambda_function.api_handler"
+               data-service-type="lambda"
+               data-tooltip="Api Handler (1 resources)" data-is-vpc="false" 
+               transform="translate(370, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+    <title>Icon-Architecture/48/Arch_AWS-Lambda_48</title>
+    <g id="Icon-Architecture/48/Arch_AWS-Lambda_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/48/Compute" fill="#ED7100">
+            <rect id="Rectangle" x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M22.6794094,52 L13.5740701,52 L23.8376189,30.41 L28.3997494,39.861 L22.6794094,52 Z M24.7269406,27.667 C24.5606285,27.321 24.2120702,27.103 23.8306478,27.103 L23.8276601,27.103 C23.4452418,27.104 23.0966835,27.325 22.9323632,27.672 L11.0973143,52.569 C10.9499239,52.879 10.9708374,53.243 11.1540795,53.534 C11.3353298,53.824 11.6540117,54 11.9955989,54 L23.309802,54 C23.695208,54 24.0447622,53.777 24.2100784,53.428 L30.4044577,40.284 C30.5329264,40.01 30.5319305,39.692 30.3994783,39.42 L24.7269406,27.667 Z M51.0082382,52 L41.985557,52 L26.9547262,19.578 C26.7914017,19.226 26.4388599,19 26.0524581,19 L20.1279625,19 L20.1349337,12 L31.8146251,12 L46.7747483,44.42 C46.9380728,44.774 47.2906147,45 47.6790082,45 L51.0082382,45 L51.0082382,52 Z M52.0041191,43 L48.3143803,43 L33.354257,10.58 C33.1909326,10.226 32.8383907,10 32.450993,10 L19.1400486,10 C18.5913182,10 18.1451636,10.447 18.1441677,10.999 L18.1362006,19.999 C18.1362006,20.265 18.2407681,20.519 18.4269979,20.707 C18.6142235,20.895 18.8671772,21 19.1310857,21 L25.4170861,21 L40.4479168,53.422 C40.6112413,53.774 40.9627873,54 41.350185,54 L52.0041191,54 C52.5548412,54 53,53.552 53,53 L53,44 C53,43.448 52.5548412,43 52.0041191,43 L52.0041191,43 Z" id="AWS-Lambda_Icon_48_Squid" fill="#FFFFFF"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Api Handler
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_ingest_worker.aws_lambda_function.api_handler"
+               data-service-type="lambda"
+               data-tooltip="Api Handler (1 resources)" data-is-vpc="false" 
+               transform="translate(509, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+    <title>Icon-Architecture/48/Arch_AWS-Lambda_48</title>
+    <g id="Icon-Architecture/48/Arch_AWS-Lambda_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/48/Compute" fill="#ED7100">
+            <rect id="Rectangle" x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M22.6794094,52 L13.5740701,52 L23.8376189,30.41 L28.3997494,39.861 L22.6794094,52 Z M24.7269406,27.667 C24.5606285,27.321 24.2120702,27.103 23.8306478,27.103 L23.8276601,27.103 C23.4452418,27.104 23.0966835,27.325 22.9323632,27.672 L11.0973143,52.569 C10.9499239,52.879 10.9708374,53.243 11.1540795,53.534 C11.3353298,53.824 11.6540117,54 11.9955989,54 L23.309802,54 C23.695208,54 24.0447622,53.777 24.2100784,53.428 L30.4044577,40.284 C30.5329264,40.01 30.5319305,39.692 30.3994783,39.42 L24.7269406,27.667 Z M51.0082382,52 L41.985557,52 L26.9547262,19.578 C26.7914017,19.226 26.4388599,19 26.0524581,19 L20.1279625,19 L20.1349337,12 L31.8146251,12 L46.7747483,44.42 C46.9380728,44.774 47.2906147,45 47.6790082,45 L51.0082382,45 L51.0082382,52 Z M52.0041191,43 L48.3143803,43 L33.354257,10.58 C33.1909326,10.226 32.8383907,10 32.450993,10 L19.1400486,10 C18.5913182,10 18.1451636,10.447 18.1441677,10.999 L18.1362006,19.999 C18.1362006,20.265 18.2407681,20.519 18.4269979,20.707 C18.6142235,20.895 18.8671772,21 19.1310857,21 L25.4170861,21 L40.4479168,53.422 C40.6112413,53.774 40.9627873,54 41.350185,54 L52.0041191,54 C52.5548412,54 53,53.552 53,53 L53,44 C53,43.448 52.5548412,43 52.0041191,43 L52.0041191,43 Z" id="AWS-Lambda_Icon_48_Squid" fill="#FFFFFF"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Api Handler
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_api.aws_cloudwatch_event_rule.lambda_cron"
+               data-service-type="eventbridge"
+               data-tooltip="Lambda Cron (1 resources)" data-is-vpc="false" 
+               transform="translate(370, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">EVE</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Cron
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="lambda_ingest_worker.aws_cloudwatch_event_rule.lambda_cron"
+               data-service-type="eventbridge"
+               data-tooltip="Lambda Cron (1 resources)" data-is-vpc="false" 
+               transform="translate(509, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">EVE</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Lambda Cron
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="ecr.aws_ecr_repository.backend"
+               data-service-type="ecr"
+               data-tooltip="Sports-Monitor-Ba... (1 resources)" data-is-vpc="false" 
+               transform="translate(648, 835)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+    <title>Icon-Architecture/48/Arch_Amazon-Elastic-Container-Registry_48</title>
+    <g id="Icon-Architecture/48/Arch_Amazon-Elastic-Container-Registry_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/48/Compute" fill="#ED7100">
+            <rect id="Rectangle" x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M30.726,29.9221953 C30.279,30.1827125 30,30.6666734 30,31.1847019 L30,51.5341041 L15,42.8578781 L15,23.0114745 L32.172,13.0777519 L47.088,20.4574036 L30.726,29.9221953 Z M49.704,20.42033 C49.704,19.9023015 49.426,19.4203446 48.921,19.1317717 L32.879,11.1960158 C32.433,10.9354986 31.876,10.9344966 31.428,11.1940118 L13.729,21.4333413 C13.28,21.6928565 13,22.1768174 13,22.6968499 L13,43.1725028 C13,43.6905313 13.279,44.1744922 13.728,44.4350094 L29.816,53.7414867 C30.04,53.8717454 30.292,53.9368747 30.545,53.9368747 C30.796,53.9368747 31.047,53.8727473 31.272,53.7424887 C31.721,53.4829735 32,52.9990126 32,52.4789801 L32,31.4993265 L48.978,21.6778267 C49.426,21.4193134 49.704,20.9373565 49.704,20.42033 L49.704,20.42033 Z M50,42.9410432 L37.004,51.5331022 L37.004,44.4099597 L43.603,39.4160446 C43.853,39.2266686 44,38.9300798 44,38.6164571 L44,30.4803034 L50,27.0064062 L50,42.9410432 Z M51.273,24.7990236 C50.825,24.5385063 50.267,24.5375044 49.817,24.7990236 L42.879,28.812993 C42.639,28.9422497 42,29.287936 42,30.0304101 L42,38.1174664 L35.663,42.9129875 C35.255,43.1805187 35.004,43.6414338 35.004,44.1344126 L35.004,52.5461134 C35.004,53.0661459 35.284,53.5501068 35.733,53.809622 C35.951,53.9348707 36.195,54 36.445,54 C36.709,54 36.982,53.9278568 37.239,53.7775584 L51.275,44.4971327 C51.722,44.2376175 52,43.7536566 52,43.2356281 L52,26.0625322 C52,25.5424997 51.721,25.0585388 51.273,24.7990236 L51.273,24.7990236 Z" id="Amazon-Elastic-Container-Registry_Icon_48_Squid" fill="#FFFFFF"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Sports-Monitor-Ba...
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="frontend.aws_s3_bucket.frontend"
+               data-service-type="s3"
+               data-tooltip="Frontend (1 resources)" data-is-vpc="false" 
+               transform="translate(231, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+    <title>Icon-Architecture/48/Arch_Amazon-Simple-Storage-Service_48</title>
+    <g id="Icon-Architecture/48/Arch_Amazon-Simple-Storage-Service_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/48/Storage" fill="#7AA116">
+            <rect id="Rectangle" x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <g id="Icon-Service/48/Amazon-Simple-Storage-Service_48" transform="translate(10.999800, 10.000200)" fill="#FFFFFF">
+            <path d="M36.759,23.948 L36.993,22.131 C39.166,23.385 39.842,24.121 40.037,24.424 C39.713,24.485 38.832,24.509 36.759,23.948 L36.759,23.948 Z M19.5,11 C9.125,11 2.382,8.488 2,6.696 L2,6.511 C2.349,5.392 8.14,2 19.5,2 C30.84,2 36.632,5.381 37,6.505 L37,6.616 C36.724,8.446 29.961,11 19.5,11 L19.5,11 Z M34.818,23.362 C30.053,21.797 23.912,18.979 21.594,17.888 C21.535,16.786 20.628,15.906 19.512,15.906 C18.358,15.906 17.418,16.845 17.418,18 C17.418,19.154 18.358,20.094 19.512,20.094 C19.969,20.094 20.389,19.942 20.733,19.693 C23.132,20.822 29.619,23.798 34.558,25.38 L32.837,38.724 C32.583,40.352 27.919,42 19.497,42 C11.072,42 6.405,40.352 6.155,38.751 L2.435,9.814 C5.945,11.915 12.749,13 19.5,13 C26.25,13 33.054,11.915 36.565,9.815 L34.818,23.362 Z M39,6.5 C39,3.431 30.661,0 19.5,0 C8.339,0 -3.55271368e-15,3.431 -3.55271368e-15,6.5 L-3.55271368e-15,7.043 L4.174,39.033 C4.875,43.516 15.123,44 19.497,44 C23.869,44 34.113,43.516 34.818,39.007 L36.501,25.947 C37.778,26.279 38.812,26.456 39.616,26.455 C40.606,26.455 41.273,26.203 41.697,25.697 C42.047,25.281 42.185,24.756 42.085,24.221 C41.857,23 40.403,21.712 37.37,20.044 L37.27,19.989 L39,7.044 L39,6.5 Z" id="Amazon-Simple-Storage-Service-Icon_48_Squid"></path>
+        </g>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Frontend
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="frontend.aws_cloudfront_distribution.frontend"
+               data-service-type="cloudfront"
+               data-tooltip="Frontend (1 resources)" data-is-vpc="false" 
+               transform="translate(862.5, 82)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 64 64">
+                    
+    <title>Icon-Architecture/48/Arch_Amazon-CloudFront_48</title>
+    <g id="Icon-Architecture/48/Arch_Amazon-CloudFront_48" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/48/Networking-Content-Delivery" fill="#8C4FFF">
+            <rect id="Rectangle" x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M41.5,43.5 C40.397,43.5 39.5,42.603 39.5,41.5 C39.5,40.397 40.397,39.5 41.5,39.5 C42.603,39.5 43.5,40.397 43.5,41.5 C43.5,42.603 42.603,43.5 41.5,43.5 L41.5,43.5 Z M41.5,37.5 C39.294,37.5 37.5,39.294 37.5,41.5 C37.5,43.706 39.294,45.5 41.5,45.5 C43.706,45.5 45.5,43.706 45.5,41.5 C45.5,39.294 43.706,37.5 41.5,37.5 L41.5,37.5 Z M22.5,32.5 C21.397,32.5 20.5,31.603 20.5,30.5 C20.5,29.397 21.397,28.5 22.5,28.5 C23.603,28.5 24.5,29.397 24.5,30.5 C24.5,31.603 23.603,32.5 22.5,32.5 L22.5,32.5 Z M22.5,26.5 C20.294,26.5 18.5,28.294 18.5,30.5 C18.5,32.706 20.294,34.5 22.5,34.5 C24.706,34.5 26.5,32.706 26.5,30.5 C26.5,28.294 24.706,26.5 22.5,26.5 L22.5,26.5 Z M45.389,47.124 C45.168,46.607 44.936,46.094 44.685,45.591 L42.896,46.486 C43.17,47.035 43.42,47.599 43.656,48.165 C42.82,48.762 41.943,49.288 41.028,49.74 C41.384,48.865 41.694,47.975 41.974,47.012 L40.054,46.454 C39.564,48.134 38.985,49.581 38.184,51.133 C36.357,51.698 34.452,52 32.5,52 C29.465,52 26.567,51.314 23.871,49.976 C22.503,46.615 21.838,43.534 21.838,40.559 C21.838,39.267 22.063,38.196 22.322,36.956 C22.386,36.652 22.45,36.343 22.514,36.024 L20.551,35.638 C20.49,35.949 20.427,36.25 20.365,36.545 C20.094,37.838 19.838,39.06 19.838,40.559 C19.838,43.074 20.274,45.644 21.154,48.354 C16.072,44.724 13,38.854 13,32.5 C13,32.389 13.01,32.273 13.012,32.161 C14.642,31.799 16.123,31.614 17.854,31.571 L17.804,29.572 C16.169,29.612 14.694,29.779 13.163,30.084 C14.081,22.683 19.212,16.394 26.323,14.019 C27.873,14.818 29.02,15.524 30.135,16.37 L31.344,14.776 C30.646,14.248 29.934,13.771 29.146,13.299 C30.244,13.108 31.363,13 32.5,13 C35.032,13 37.532,13.494 39.849,14.439 C39.342,14.593 38.82,14.763 38.243,14.971 L38.923,16.852 C40.316,16.349 41.408,16.04 42.571,15.821 C48.399,19.341 52,25.667 52,32.5 C52,38.156 49.605,43.416 45.389,47.124 L45.389,47.124 Z M43.008,13.749 C39.826,11.95 36.192,11 32.5,11 C30.392,11 28.324,11.301 26.357,11.895 C17.723,14.464 11.568,22.23 11.045,31.196 C11.01,31.625 11,32.062 11,32.5 C11,40.444 15.352,47.707 22.354,51.455 C25.459,53.12 28.968,54 32.5,54 C34.892,54 37.229,53.61 39.437,52.843 C41.684,52.086 43.773,50.963 45.646,49.507 C50.955,45.399 54,39.2 54,32.5 C54,24.732 49.787,17.546 43.008,13.749 L43.008,13.749 Z M38.384,37.411 L37.003,38.858 C34.022,36.015 31.047,34.146 27.637,32.975 L28.287,31.083 C31.979,32.351 35.188,34.362 38.384,37.411 L38.384,37.411 Z M38.444,22.364 C41.282,26.692 42.88,31.444 43.193,36.488 L41.197,36.612 C40.905,31.919 39.417,27.495 36.772,23.46 L38.444,22.364 Z M26.451,26.797 L24.773,25.708 C26.316,23.332 27.639,21.758 29.336,20.278 L30.65,21.786 C29.103,23.135 27.886,24.587 26.451,26.797 L26.451,26.797 Z M34.5,16.5 C35.603,16.5 36.5,17.397 36.5,18.5 C36.5,19.603 35.603,20.5 34.5,20.5 C33.397,20.5 32.5,19.603 32.5,18.5 C32.5,17.397 33.397,16.5 34.5,16.5 L34.5,16.5 Z M34.5,22.5 C36.706,22.5 38.5,20.706 38.5,18.5 C38.5,16.294 36.706,14.5 34.5,14.5 C32.294,14.5 30.5,16.294 30.5,18.5 C30.5,20.706 32.294,22.5 34.5,22.5 L34.5,22.5 Z" id="Amazon-CloudFront_Icon_48_Squid" fill="#FFFFFF"></path>
+    </g>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Frontend
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="frontend.aws_wafv2_web_acl.frontend"
+               data-service-type="waf"
+               data-tooltip="Frontend (1 resources)" data-is-vpc="false" 
+               transform="translate(1044.5, 82)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#DD344C" fill-opacity="0.15" stroke="#DD344C" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#DD344C">WAF</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Frontend
+                </text>
+                
+            </g>
+            
+
+            <g class="service draggable" data-service-id="monitoring.aws_sns_topic.alerts"
+               data-service-type="sns"
+               data-tooltip="Alerts (1 resources)" data-is-vpc="false" 
+               transform="translate(648, 696)" style="cursor: grab;">
+                <rect class="service-bg" x="-8" y="-8"
+                    width="105" height="125"
+                    fill="white" stroke="#e0e0e0" stroke-width="1" rx="8" ry="8"
+                    filter="url(#shadow)"/>
+                <svg class="service-icon" width="89" height="89" viewBox="0 0 48 48">
+                    
+  <rect width="48" height="48" rx="4" fill="#E7157B" fill-opacity="0.15" stroke="#E7157B" stroke-width="2"/>
+  <text x="24.0" y="28.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.0" font-weight="bold" fill="#E7157B">SNS</text>
+
+                </svg>
+                <text class="service-label" x="44.5" y="105"
+                    font-family="Arial, sans-serif" font-size="12" fill="#333"
+                    text-anchor="middle" font-weight="500">
+                    Alerts
+                </text>
+                
+            </g>
+            
+</g>
+</svg>
+            </div>
+        </div>
+        <div class="aggregation-panel" id="aggregation-panel" style="display:none;">
+            <span class="aggregation-panel-label">Aggregation:</span>
+            <div id="aggregation-chips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+        <div class="conn-filter-panel" id="conn-filter-panel">
+            <span class="conn-filter-panel-label">Connections:</span>
+            <div id="conn-filter-chips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+        <div class="legend">
+            <h3>Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-section">
+                    <h4>Connection Types</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-data" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3B48CC"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#3B48CC" stroke-width="2" marker-end="url(#lm-data)"/></svg></div>
+                            <span>Data Flow</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-trigger" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#E7157B"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#E7157B" stroke-width="2" marker-end="url(#lm-trigger)"/></svg></div>
+                            <span>Event Trigger</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-encrypt" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6c757d"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#6c757d" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#lm-encrypt)"/></svg></div>
+                            <span>Encryption</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-ref" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#999"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#999" stroke-width="2" marker-end="url(#lm-ref)"/></svg></div>
+                            <span>Reference</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-network" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0d7c3f"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#0d7c3f" stroke-width="2" marker-end="url(#lm-network)"/></svg></div>
+                            <span>Network Flow</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line"><svg width="36" height="14" xmlns="http://www.w3.org/2000/svg"><defs><marker id="lm-security" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d97706"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#d97706" stroke-width="2" stroke-dasharray="2,4" marker-end="url(#lm-security)"/></svg></div>
+                            <span>Security Rule</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="legend-section">
+                    <h4>Subnet Types</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: #e3fcef; border-color: #22a06b;"></div>
+                            <span>Public Subnet</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: #deebff; border-color: #0052cc;"></div>
+                            <span>Private Subnet</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background: #fffae6; border-color: #ff991f;"></div>
+                            <span>Database Subnet</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="legend-section">
+                    <h4>VPC Endpoints</h4>
+                    <div class="legend-items">
+                        <div class="legend-item"><span><strong>Gateway</strong> &mdash; S3, DynamoDB</span></div>
+                        <div class="legend-item"><span><strong>Interface</strong> &mdash; ECR, Logs, etc.</span></div>
+                    </div>
+                </div>
+                <div class="legend-section">
+                    <h4>Interactions</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">Click service to highlight connections</div>
+                        <div class="legend-item">Click connection to highlight endpoints</div>
+                        <div class="legend-item">Drag icons to reposition</div>
+                        <div class="legend-item">Toggle connection types and aggregation</div>
+                        <div class="legend-item">Save/Load to persist layout</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="highlight-info" id="highlight-info"></div>
+    <div class="export-modal" id="export-modal">
+        <div class="export-modal-content">
+            <h3>Export Diagram</h3>
+            <canvas id="export-canvas" style="display:none;"></canvas>
+            <img id="export-preview" class="export-preview" alt="Preview"/>
+            <div class="export-modal-actions">
+                <button class="export-btn export-btn-secondary" onclick="closeExportModal()">Cancel</button>
+                <a id="export-download" class="export-btn export-btn-primary" download="diagram.png">Download</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Aggregation configuration (injected by Python)
+        const AGGREGATION_CONFIG = {"threshold": 3, "groups": {"dynamodb": {"count": 1, "label": "Dynamodb", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#3B48CC\" fill-opacity=\"0.15\" stroke=\"#3B48CC\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#3B48CC\">DYN</text>\n</svg>", "color": "#3B48CC", "serviceIds": ["aws_dynamodb_table.sports_events"], "serviceNames": ["Sports Events"]}, "kms": {"count": 1, "label": "Kms", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#DD344C\" fill-opacity=\"0.15\" stroke=\"#DD344C\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#DD344C\">KMS</text>\n</svg>", "color": "#DD344C", "serviceIds": ["kms.aws_kms_key.shared"], "serviceNames": ["Shared"]}, "vpc": {"count": 1, "label": "Vpc", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n    <title>Icon-Architecture/48/Arch_Amazon-Virtual-Private-Cloud_48</title>\n    <g id=\"Icon-Architecture/48/Arch_Amazon-Virtual-Private-Cloud_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Icon-Architecture-BG/48/Networking-Content-Delivery\" fill=\"#8C4FFF\">\n            <rect id=\"Rectangle\" x=\"0\" y=\"0\" width=\"64\" height=\"64\"></rect>\n        </g>\n        <path d=\"M48,33.9772867 L44.499,32.5082867 L44.499,46.8782867 C47.906,46.1472867 47.998,42.1812867 48,41.9952867 L48,33.9772867 Z M42.499,46.9232867 L42.499,32.5082867 L39,33.9772867 L39,42.0042867 C39.008,42.4662867 39.183,46.3392867 42.499,46.9232867 L42.499,46.9232867 Z M43.112,30.0822867 C43.358,29.9772867 43.638,29.9782867 43.886,30.0812867 L49.387,32.3902867 C49.759,32.5462867 50,32.9092867 50,33.3122867 L50,42.0042867 C49.978,44.4312867 48.562,49.0042867 43.37,49.0042867 C38.393,49.0042867 37.026,44.4322867 37,42.0152867 L37,33.3122867 C37,32.9092867 37.241,32.5462867 37.613,32.3902867 L43.112,30.0822867 Z M52,30.7922867 L43.492,27.0922867 L34.9998912,30.6682867 L34.9998912,41.0252867 C34.999,41.0902867 34.963,46.0092867 37.807,48.8942867 C39.187,50.2942867 41.059,51.0042867 43.37,51.0042867 C51.808,51.0042867 51.996,41.4252867 52,41.0182867 L52,30.7922867 Z M54,30.1362867 L54,41.0252867 C53.973,45.1732867 51.716,53.0042867 43.37,53.0042867 C40.498,53.0042867 38.145,52.0902867 36.373,50.2882867 C32.941,46.7972867 32.996,41.2432867 33,41.0082867 L33,30.0042867 C33,29.6022867 33.241,29.2382867 33.612,29.0822867 L43.111,25.0822867 C43.363,24.9762867 43.647,24.9782867 43.897,25.0872867 L53.398,29.2192867 C53.764,29.3782867 54,29.7382867 54,30.1362867 L54,30.1362867 Z M19,38.0042867 L30,38.0042867 L30,40.0042867 L19,40.0042867 C14.216,40.0042867 10.271,36.4832867 10.02,31.9882867 C10.002,31.8132867 10,31.5992867 10,31.3852867 C10,26.0862867 13.654,24.0382867 15.919,23.2782867 C15.902,23.0632867 15.891,22.8432867 15.891,22.6262867 C15.891,18.0392867 18.658,13.7012867 22.621,12.0792867 C27.58,10.0492867 33.235,10.9372867 36.695,14.2852867 C37.718,15.2822867 38.604,16.5962867 39.343,18.2062867 C40.299,17.4222867 41.392,17.0042867 42.523,17.0042867 C45.234,17.0042867 48.281,19.2962867 48.9,23.0622867 C51.069,23.3442867 52.936,24.6392867 53.896,26.5822867 L52.104,27.4692867 C51.34,25.9252867 49.806,25.0042867 48,25.0042867 C47.471,25.0042867 47.033,24.5912867 47.002,24.0632867 C46.807,20.7622867 44.275,19.0042867 42.523,19.0042867 C41.55,19.0042867 40.582,19.5742867 39.797,20.6082867 C39.575,20.8992867 39.215,21.0482867 38.852,20.9932867 C38.49,20.9382867 38.187,20.6912867 38.062,20.3482867 C37.327,18.3462867 36.398,16.7892867 35.302,15.7202867 C32.406,12.9172867 27.615,12.1962867 23.379,13.9302867 C19.775,15.4052867 17.891,19.4212867 17.891,22.6262867 C17.891,23.0262867 17.947,23.5032867 17.993,23.8862867 C18.053,24.3862867 17.73,24.8532867 17.24,24.9752867 C15.283,25.4592867 12,26.9372867 12,31.3852867 C12,31.5352867 11.998,31.6852867 12.013,31.8362867 C12.209,35.3122867 15.276,38.0042867 19,38.0042867 L19,38.0042867 Z\" id=\"Amazon-Virtual-Private-Cloud_Icon_48_Squid\" fill=\"#FFFFFF\"></path>\n    </g>\n</svg>", "color": "#8C4FFF", "serviceIds": ["networking.aws_vpc.main"], "serviceNames": ["Main"]}, "cloudwatch": {"count": 3, "label": "Cloudwatch", "defaultAggregated": true, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#E7157B\" fill-opacity=\"0.15\" stroke=\"#E7157B\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#E7157B\">CLO</text>\n</svg>", "color": "#E7157B", "serviceIds": ["networking.aws_cloudwatch_log_group.vpc_flow_logs", "api_gateway.aws_cloudwatch_log_group.api_gateway_logs", "monitoring.aws_cloudwatch_log_group.api_logs"], "serviceNames": ["Vpc Flow Logs", "Api Gateway Logs", "Api Logs"]}, "iam": {"count": 4, "label": "Iam", "defaultAggregated": true, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#DD344C\" fill-opacity=\"0.15\" stroke=\"#DD344C\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#DD344C\">IAM</text>\n</svg>", "color": "#DD344C", "serviceIds": ["networking.aws_iam_role.vpc_flow_log_role", "api_gateway.aws_iam_role.api_gateway_cloudwatch", "lambda_api.aws_iam_role.lambda_role", "lambda_ingest_worker.aws_iam_role.lambda_role"], "serviceNames": ["Vpc Flow Log Role", "Api Gateway Cloud...", "Lambda Role", "Lambda Role"]}, "internet_gateway": {"count": 1, "label": "Internet Gateway", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n    <title>Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_Internet-Gateway_48</title>\n    <g id=\"Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_Internet-Gateway_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <path d=\"M33.4312,35.1778 L31.9332,35.1778 L31.9332,17.5018 C31.9332,17.1088 31.7022,16.7518 31.3442,16.5908 L31.2522,16.5488 C29.2432,15.6418 27.1642,14.7028 24.1762,14.7028 C21.0532,14.7028 18.7612,15.7118 16.4952,16.8368 C16.1552,17.0058 15.9402,17.3528 15.9402,17.7328 L15.9402,35.1778 L14.4772,35.1778 L14.4772,16.3118 C16.9112,14.3328 20.4202,13.2048 24.1862,13.2048 C27.6872,13.2048 31.0252,14.2018 33.4312,15.9528 L33.4312,35.1778 Z M24.1862,11.2048 C19.7612,11.2048 15.6172,12.6238 12.8152,15.0998 C12.6002,15.2888 12.4772,15.5618 12.4772,15.8488 L12.4772,36.1778 C12.4772,36.7308 12.9242,37.1778 13.4772,37.1778 L16.9402,37.1778 C17.4932,37.1778 17.9402,36.7308 17.9402,36.1778 L17.9402,18.3558 C19.8592,17.4288 21.7192,16.7028 24.1762,16.7028 C26.5112,16.7028 28.2092,17.3778 29.9332,18.1488 L29.9332,36.1778 C29.9332,36.7308 30.3802,37.1778 30.9332,37.1778 L34.4312,37.1778 C34.9842,37.1778 35.4312,36.7308 35.4312,36.1778 L35.4312,15.4578 C35.4312,15.1538 35.2922,14.8658 35.0532,14.6748 C32.2792,12.4698 28.3182,11.2048 24.1862,11.2048 L24.1862,11.2048 Z M23.9542,43.9088 C12.9522,43.9088 3.9992,34.9568 3.9992,23.9538 C3.9992,12.9508 12.9522,3.9998 23.9542,3.9998 C34.9572,3.9998 43.9092,12.9508 43.9092,23.9538 C43.9092,34.9568 34.9572,43.9088 23.9542,43.9088 L23.9542,43.9088 Z M23.9542,1.9998 C11.8482,1.9998 1.9992,11.8488 1.9992,23.9538 C1.9992,36.0608 11.8482,45.9088 23.9542,45.9088 C36.0602,45.9088 45.9092,36.0608 45.9092,23.9538 C45.9092,11.8488 36.0602,1.9998 23.9542,1.9998 L23.9542,1.9998 Z\" id=\"AWS-Amazon-VPC_Internet-gateway_Resource-Icon_light-bg\" fill=\"#8C4FFF\"></path>\n    </g>\n</svg>", "color": "#8C4FFF", "serviceIds": ["networking.aws_internet_gateway.main"], "serviceNames": ["Main"]}, "nat_gateway": {"count": 1, "label": "Nat Gateway", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n    <title>Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_NAT-Gateway_48</title>\n    <g id=\"Icon-Resource/Networking-and-Content-Delivery/Res_Amazon-VPC_NAT-Gateway_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <path d=\"M13.6255,35.9209 L13.6255,33.0829 L15.3995,34.5019 L13.6255,35.9209 Z M13.2505,30.2209 C12.9495,29.9799 12.5365,29.9329 12.1915,30.1009 C11.8465,30.2679 11.6255,30.6169 11.6255,31.0019 L11.6255,38.0019 C11.6255,38.3869 11.8465,38.7359 12.1915,38.9029 C12.3305,38.9699 12.4785,39.0019 12.6255,39.0019 C12.8485,39.0019 13.0695,38.9279 13.2505,38.7829 L17.6255,35.2829 C17.8625,35.0929 18.0005,34.8059 18.0005,34.5019 C18.0005,34.1979 17.8625,33.9109 17.6255,33.7209 L13.2505,30.2209 Z M37.2515,26.8369 L37.2515,22.9149 L39.2125,24.8759 L37.2515,26.8369 Z M41.3335,24.1689 L36.9585,19.7939 C36.6725,19.5079 36.2445,19.4219 35.8685,19.5769 C35.4945,19.7319 35.2515,20.0969 35.2515,20.5009 L35.2515,23.8759 L27.6255,23.8759 L27.6255,14.3759 C27.6255,13.8229 27.1785,13.3759 26.6255,13.3759 L18.9315,13.3759 L18.9315,15.3759 L25.6255,15.3759 L25.6255,23.8759 L18.7505,23.8759 L18.7505,25.8759 L25.6255,25.8759 L25.6255,34.3769 L18.9315,34.3769 L18.9315,36.3769 L26.6255,36.3769 C27.1785,36.3769 27.6255,35.9299 27.6255,35.3769 L27.6255,25.8759 L35.2515,25.8759 L35.2515,29.2519 C35.2515,29.6559 35.4955,30.0219 35.8685,30.1759 C35.9925,30.2279 36.1225,30.2519 36.2515,30.2519 C36.5115,30.2519 36.7675,30.1499 36.9585,29.9589 L41.3335,25.5829 C41.7245,25.1919 41.7245,24.5599 41.3335,24.1689 L41.3335,24.1689 Z M13.6255,26.2959 L13.6255,23.4569 L15.3995,24.8759 L13.6255,26.2959 Z M13.2505,20.5949 C12.9495,20.3539 12.5365,20.3079 12.1915,20.4749 C11.8465,20.6419 11.6255,20.9909 11.6255,21.3759 L11.6255,28.3769 C11.6255,28.7619 11.8465,29.1109 12.1915,29.2779 C12.3305,29.3449 12.4785,29.3769 12.6255,29.3769 C12.8485,29.3769 13.0695,29.3029 13.2505,29.1579 L17.6255,25.6569 C17.8625,25.4669 18.0005,25.1799 18.0005,24.8759 C18.0005,24.5719 17.8625,24.2849 17.6255,24.0949 L13.2505,20.5949 Z M13.6255,15.7949 L13.6255,12.9569 L15.3995,14.3759 L13.6255,15.7949 Z M13.2505,10.0949 C12.9495,9.8539 12.5365,9.8069 12.1915,9.9749 C11.8465,10.1419 11.6255,10.4909 11.6255,10.8759 L11.6255,17.8759 C11.6255,18.2609 11.8465,18.6099 12.1915,18.7769 C12.3305,18.8439 12.4785,18.8759 12.6255,18.8759 C12.8485,18.8759 13.0695,18.8019 13.2505,18.6569 L17.6255,15.1569 C17.8625,14.9669 18.0005,14.6799 18.0005,14.3759 C18.0005,14.0719 17.8625,13.7849 17.6255,13.5949 L13.2505,10.0949 Z M24.0005,44.0029 C12.9725,44.0029 3.9995,35.0299 3.9995,24.0009 C3.9995,12.9729 12.9725,3.9999 24.0005,3.9999 C35.0295,3.9999 44.0025,12.9729 44.0025,24.0009 C44.0025,35.0299 35.0295,44.0029 24.0005,44.0029 L24.0005,44.0029 Z M24.0005,1.9999 C11.8685,1.9999 1.9995,11.8689 1.9995,24.0009 C1.9995,36.1329 11.8685,46.0029 24.0005,46.0029 C36.1325,46.0029 46.0025,36.1329 46.0025,24.0009 C46.0025,11.8689 36.1325,1.9999 24.0005,1.9999 L24.0005,1.9999 Z\" id=\"AWS-Amazon-VPC_NAT-gateway_Resource-Icon_light-bg\" fill=\"#8C4FFF\"></path>\n    </g>\n</svg>", "color": "#8C4FFF", "serviceIds": ["networking.aws_nat_gateway.main"], "serviceNames": ["Main"]}, "rds": {"count": 1, "label": "Rds", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#3B48CC\" fill-opacity=\"0.15\" stroke=\"#3B48CC\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#3B48CC\">RDS</text>\n</svg>", "color": "#3B48CC", "serviceIds": ["databases.aws_db_instance.postgres"], "serviceNames": ["Postgres"]}, "security_groups": {"count": 3, "label": "Security Groups", "defaultAggregated": true, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n    <title>Icon-Resource/General-Resource/Res_Firewall_48_Light</title>\n    <g id=\"Icon-Resource/General-Resource/Res_Firewall_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <path d=\"M34.912,36.0124 L43.986,36.0124 L43.986,32.2824 L34.912,32.2824 L34.912,36.0124 Z M33.637,38.0134 L26.844,38.0134 L26.844,41.0884 L35.812,41.0884 L35.812,38.0134 L33.911,38.0134 L33.637,38.0134 Z M23.108,36.0134 L32.912,36.0134 L32.912,32.2834 L23.108,32.2834 L23.108,36.0134 Z M33.911,30.2824 L39.882,30.2824 L39.882,26.3294 L30.913,26.3294 L30.913,30.2824 L33.637,30.2824 L33.911,30.2824 Z M45.986,31.2824 L45.986,37.0134 C45.986,37.5654 45.538,38.0134 44.986,38.0134 L37.812,38.0134 L37.812,42.0884 C37.812,42.6404 37.364,43.0884 36.812,43.0884 L25.844,43.0884 C25.291,43.0884 24.844,42.6404 24.844,42.0884 L24.844,38.0134 L22.108,38.0134 C21.555,38.0134 21.108,37.5654 21.108,37.0134 L21.108,31.2824 C21.108,30.7294 21.555,30.2824 22.108,30.2824 L28.913,30.2824 L28.913,25.3294 C28.913,24.7764 29.361,24.3294 29.913,24.3294 L40.882,24.3294 C41.435,24.3294 41.882,24.7764 41.882,25.3294 L41.882,30.2824 L44.986,30.2824 C45.538,30.2824 45.986,30.7294 45.986,31.2824 L45.986,31.2824 Z M23.587,24.7044 C23.522,25.1124 23.713,25.5184 24.07,25.7274 C24.425,25.9364 24.875,25.9034 25.197,25.6464 C25.294,25.5694 27.281,23.9424 28.158,19.9594 C28.554,20.4704 28.978,21.1794 29.308,22.1344 L31.198,21.4814 C30.096,18.2904 28.031,17.1394 27.945,17.0914 C27.649,16.9314 27.297,16.9294 27.001,17.0854 C26.706,17.2404 26.507,17.5334 26.473,17.8654 C26.348,19.0544 26.111,20.0504 25.831,20.8714 C25.419,10.4424 16.37,6.8834 16.268,6.8444 C15.802,6.6684 15.279,6.8614 15.037,7.2974 C14.797,7.7324 14.914,8.2784 15.312,8.5784 C18.096,10.6774 19.366,14.2324 18.804,18.2914 L18.567,19.5854 C18.225,21.0784 17.655,22.5424 16.851,23.9734 L16.156,25.3504 C12.763,32.8974 15.634,40.4644 15.758,40.7824 C15.908,41.1694 16.279,41.4204 16.69,41.4204 C16.715,41.4204 16.74,41.4194 16.767,41.4174 C16.818,41.4134 18.028,41.3164 19.736,40.9134 L19.275,38.9674 C18.511,39.1474 17.854,39.2614 17.384,39.3294 C16.798,37.3514 15.506,31.6734 17.961,26.2124 L18.615,24.9154 C19.492,23.3544 20.132,21.7114 20.525,19.9894 L20.778,18.6104 C21.112,16.1984 20.896,13.9364 20.175,11.9584 C22.488,14.4104 24.601,18.4454 23.587,24.7044 L23.587,24.7044 Z M12.408,7.5114 C11.928,7.2614 11.197,7.0354 10.497,6.9994 C12.099,9.0514 14.384,13.3844 12.09,19.6854 C11.956,20.0544 11.62,20.3094 11.23,20.3404 C10.847,20.3824 10.468,20.1724 10.277,19.8304 C9.657,18.7194 7.914,16.1994 5.989,15.2134 C6.658,17.6494 7.412,22.0714 5.316,25.2544 C5.212,25.4124 5.113,25.5704 5.021,25.7284 C3.187,28.8524 3.816,32.6804 6.623,35.4774 C6.63,35.4844 7.322,36.1574 9.117,37.1924 C11.328,38.4694 12.195,38.8444 12.204,38.8474 L11.426,40.6894 C11.388,40.6734 10.469,40.2824 8.117,38.9254 C6.086,37.7534 5.29,36.9734 5.206,36.8894 C1.791,33.4854 1.022,28.5914 3.296,24.7164 C3.406,24.5274 3.523,24.3404 3.646,24.1534 C6.05,20.5044 3.578,14.2424 3.553,14.1804 C3.429,13.8714 3.466,13.5214 3.653,13.2474 C3.838,12.9724 4.149,12.8074 4.481,12.8074 C7.148,12.8074 9.453,15.2174 10.792,16.9974 C12.143,10.6794 8.165,7.3554 7.979,7.2044 C7.728,7.0004 7.589,6.6854 7.61,6.3634 C7.63,6.0404 7.803,5.7464 8.078,5.5754 C9.625,4.6164 11.885,4.9854 13.33,5.7354 L12.408,7.5114 Z\" id=\"Amazon-Firewall_Resource-Icon_light-bg\" fill=\"#242F3E\"></path>\n    </g>\n</svg>", "color": "#666666", "serviceIds": ["databases.aws_security_group.rds_sg", "lambda_api.aws_security_group.lambda_sg", "lambda_ingest_worker.aws_security_group.lambda_sg"], "serviceNames": ["Rds Sg", "Lambda Sg", "Lambda Sg"]}, "api_gateway": {"count": 1, "label": "Api Gateway", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n<g id=\"Icon-Architecture/48/Arch_Amazon-API-Gateway_48\">\n<g id=\"Icon-Architecture-BG/48/Networking-Content-Delivery\">\n<rect id=\"Rectangle\" width=\"64\" height=\"64\" fill=\"#8C4FFF\"/>\n</g>\n<g id=\"Icon-Service/48/Amazon-API-Gateway_48\">\n<path id=\"Amazon-API-Gateway_Icon_48_Squid\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M28 43.9999H31V41.9999H28V43.9999ZM33 43.9999H36V41.9999H33V43.9999ZM28 21.9998H31V19.9998H28V21.9998ZM33 21.9998H36V19.9998H33V21.9998ZM22 12.7408L12 18.5738V46.382L22 51.382V12.7408ZM24 19.9998H26V21.9998H24V41.9999H26V43.9999H24V53C24 53.347 23.82 53.668 23.525 53.851C23.365 53.95 23.183 54 23 54C22.847 54 22.694 53.965 22.553 53.895L10.553 47.895C10.214 47.725 10 47.379 10 47V17.9998C10 17.6448 10.188 17.3148 10.496 17.1358L22.496 10.1358C22.805 9.95575 23.188 9.95475 23.498 10.1328C23.809 10.3108 24 10.6418 24 10.9998V19.9998ZM52 18.5738L42 12.7408V51.382L52 46.382V18.5738ZM54 17.9998V47C54 47.379 53.786 47.725 53.447 47.895L41.447 53.895C41.306 53.965 41.153 54 41 54C40.817 54 40.635 53.95 40.475 53.851C40.18 53.668 40 53.347 40 53V43.9999H38V41.9999H40V21.9998H38V19.9998H40V10.9998C40 10.6418 40.191 10.3108 40.502 10.1328C40.812 9.95575 41.195 9.95575 41.504 10.1358L53.504 17.1358C53.812 17.3148 54 17.6448 54 17.9998ZM34.939 27.3419L33.061 26.6578L29.061 37.6579L30.939 38.3419L34.939 27.3419ZM39.707 32.7069C40.098 32.3159 40.098 31.6839 39.707 31.2929L36.707 28.2929L35.293 29.7069L37.586 31.9999L35.293 34.2929L36.707 35.7069L39.707 32.7069ZM27.293 35.7069L24.293 32.7069C23.902 32.3159 23.902 31.6839 24.293 31.2929L27.293 28.2929L28.707 29.7069L26.414 31.9999L28.707 34.2929L27.293 35.7069Z\" fill=\"white\"/>\n</g>\n</g>\n</svg>", "color": "#8C4FFF", "serviceIds": ["api_gateway.aws_apigatewayv2_api.main"], "serviceNames": ["Main"]}, "lambda": {"count": 2, "label": "Lambda", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n    <title>Icon-Architecture/48/Arch_AWS-Lambda_48</title>\n    <g id=\"Icon-Architecture/48/Arch_AWS-Lambda_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Icon-Architecture-BG/48/Compute\" fill=\"#ED7100\">\n            <rect id=\"Rectangle\" x=\"0\" y=\"0\" width=\"64\" height=\"64\"></rect>\n        </g>\n        <path d=\"M22.6794094,52 L13.5740701,52 L23.8376189,30.41 L28.3997494,39.861 L22.6794094,52 Z M24.7269406,27.667 C24.5606285,27.321 24.2120702,27.103 23.8306478,27.103 L23.8276601,27.103 C23.4452418,27.104 23.0966835,27.325 22.9323632,27.672 L11.0973143,52.569 C10.9499239,52.879 10.9708374,53.243 11.1540795,53.534 C11.3353298,53.824 11.6540117,54 11.9955989,54 L23.309802,54 C23.695208,54 24.0447622,53.777 24.2100784,53.428 L30.4044577,40.284 C30.5329264,40.01 30.5319305,39.692 30.3994783,39.42 L24.7269406,27.667 Z M51.0082382,52 L41.985557,52 L26.9547262,19.578 C26.7914017,19.226 26.4388599,19 26.0524581,19 L20.1279625,19 L20.1349337,12 L31.8146251,12 L46.7747483,44.42 C46.9380728,44.774 47.2906147,45 47.6790082,45 L51.0082382,45 L51.0082382,52 Z M52.0041191,43 L48.3143803,43 L33.354257,10.58 C33.1909326,10.226 32.8383907,10 32.450993,10 L19.1400486,10 C18.5913182,10 18.1451636,10.447 18.1441677,10.999 L18.1362006,19.999 C18.1362006,20.265 18.2407681,20.519 18.4269979,20.707 C18.6142235,20.895 18.8671772,21 19.1310857,21 L25.4170861,21 L40.4479168,53.422 C40.6112413,53.774 40.9627873,54 41.350185,54 L52.0041191,54 C52.5548412,54 53,53.552 53,53 L53,44 C53,43.448 52.5548412,43 52.0041191,43 L52.0041191,43 Z\" id=\"AWS-Lambda_Icon_48_Squid\" fill=\"#FFFFFF\"></path>\n    </g>\n</svg>", "color": "#ED7100", "serviceIds": ["lambda_api.aws_lambda_function.api_handler", "lambda_ingest_worker.aws_lambda_function.api_handler"], "serviceNames": ["Api Handler", "Api Handler"]}, "eventbridge": {"count": 2, "label": "Eventbridge", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#E7157B\" fill-opacity=\"0.15\" stroke=\"#E7157B\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#E7157B\">EVE</text>\n</svg>", "color": "#E7157B", "serviceIds": ["lambda_api.aws_cloudwatch_event_rule.lambda_cron", "lambda_ingest_worker.aws_cloudwatch_event_rule.lambda_cron"], "serviceNames": ["Lambda Cron", "Lambda Cron"]}, "ecr": {"count": 1, "label": "Ecr", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n    <title>Icon-Architecture/48/Arch_Amazon-Elastic-Container-Registry_48</title>\n    <g id=\"Icon-Architecture/48/Arch_Amazon-Elastic-Container-Registry_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Icon-Architecture-BG/48/Compute\" fill=\"#ED7100\">\n            <rect id=\"Rectangle\" x=\"0\" y=\"0\" width=\"64\" height=\"64\"></rect>\n        </g>\n        <path d=\"M30.726,29.9221953 C30.279,30.1827125 30,30.6666734 30,31.1847019 L30,51.5341041 L15,42.8578781 L15,23.0114745 L32.172,13.0777519 L47.088,20.4574036 L30.726,29.9221953 Z M49.704,20.42033 C49.704,19.9023015 49.426,19.4203446 48.921,19.1317717 L32.879,11.1960158 C32.433,10.9354986 31.876,10.9344966 31.428,11.1940118 L13.729,21.4333413 C13.28,21.6928565 13,22.1768174 13,22.6968499 L13,43.1725028 C13,43.6905313 13.279,44.1744922 13.728,44.4350094 L29.816,53.7414867 C30.04,53.8717454 30.292,53.9368747 30.545,53.9368747 C30.796,53.9368747 31.047,53.8727473 31.272,53.7424887 C31.721,53.4829735 32,52.9990126 32,52.4789801 L32,31.4993265 L48.978,21.6778267 C49.426,21.4193134 49.704,20.9373565 49.704,20.42033 L49.704,20.42033 Z M50,42.9410432 L37.004,51.5331022 L37.004,44.4099597 L43.603,39.4160446 C43.853,39.2266686 44,38.9300798 44,38.6164571 L44,30.4803034 L50,27.0064062 L50,42.9410432 Z M51.273,24.7990236 C50.825,24.5385063 50.267,24.5375044 49.817,24.7990236 L42.879,28.812993 C42.639,28.9422497 42,29.287936 42,30.0304101 L42,38.1174664 L35.663,42.9129875 C35.255,43.1805187 35.004,43.6414338 35.004,44.1344126 L35.004,52.5461134 C35.004,53.0661459 35.284,53.5501068 35.733,53.809622 C35.951,53.9348707 36.195,54 36.445,54 C36.709,54 36.982,53.9278568 37.239,53.7775584 L51.275,44.4971327 C51.722,44.2376175 52,43.7536566 52,43.2356281 L52,26.0625322 C52,25.5424997 51.721,25.0585388 51.273,24.7990236 L51.273,24.7990236 Z\" id=\"Amazon-Elastic-Container-Registry_Icon_48_Squid\" fill=\"#FFFFFF\"></path>\n    </g>\n</svg>", "color": "#ED7100", "serviceIds": ["ecr.aws_ecr_repository.backend"], "serviceNames": ["Sports-Monitor-Ba..."]}, "s3": {"count": 1, "label": "S3", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n    <title>Icon-Architecture/48/Arch_Amazon-Simple-Storage-Service_48</title>\n    <g id=\"Icon-Architecture/48/Arch_Amazon-Simple-Storage-Service_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Icon-Architecture-BG/48/Storage\" fill=\"#7AA116\">\n            <rect id=\"Rectangle\" x=\"0\" y=\"0\" width=\"64\" height=\"64\"></rect>\n        </g>\n        <g id=\"Icon-Service/48/Amazon-Simple-Storage-Service_48\" transform=\"translate(10.999800, 10.000200)\" fill=\"#FFFFFF\">\n            <path d=\"M36.759,23.948 L36.993,22.131 C39.166,23.385 39.842,24.121 40.037,24.424 C39.713,24.485 38.832,24.509 36.759,23.948 L36.759,23.948 Z M19.5,11 C9.125,11 2.382,8.488 2,6.696 L2,6.511 C2.349,5.392 8.14,2 19.5,2 C30.84,2 36.632,5.381 37,6.505 L37,6.616 C36.724,8.446 29.961,11 19.5,11 L19.5,11 Z M34.818,23.362 C30.053,21.797 23.912,18.979 21.594,17.888 C21.535,16.786 20.628,15.906 19.512,15.906 C18.358,15.906 17.418,16.845 17.418,18 C17.418,19.154 18.358,20.094 19.512,20.094 C19.969,20.094 20.389,19.942 20.733,19.693 C23.132,20.822 29.619,23.798 34.558,25.38 L32.837,38.724 C32.583,40.352 27.919,42 19.497,42 C11.072,42 6.405,40.352 6.155,38.751 L2.435,9.814 C5.945,11.915 12.749,13 19.5,13 C26.25,13 33.054,11.915 36.565,9.815 L34.818,23.362 Z M39,6.5 C39,3.431 30.661,0 19.5,0 C8.339,0 -3.55271368e-15,3.431 -3.55271368e-15,6.5 L-3.55271368e-15,7.043 L4.174,39.033 C4.875,43.516 15.123,44 19.497,44 C23.869,44 34.113,43.516 34.818,39.007 L36.501,25.947 C37.778,26.279 38.812,26.456 39.616,26.455 C40.606,26.455 41.273,26.203 41.697,25.697 C42.047,25.281 42.185,24.756 42.085,24.221 C41.857,23 40.403,21.712 37.37,20.044 L37.27,19.989 L39,7.044 L39,6.5 Z\" id=\"Amazon-Simple-Storage-Service-Icon_48_Squid\"></path>\n        </g>\n    </g>\n</svg>", "color": "#3F8624", "serviceIds": ["frontend.aws_s3_bucket.frontend"], "serviceNames": ["Frontend"]}, "cloudfront": {"count": 1, "label": "Cloudfront", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 64 64\">\n    <title>Icon-Architecture/48/Arch_Amazon-CloudFront_48</title>\n    <g id=\"Icon-Architecture/48/Arch_Amazon-CloudFront_48\" stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\">\n        <g id=\"Icon-Architecture-BG/48/Networking-Content-Delivery\" fill=\"#8C4FFF\">\n            <rect id=\"Rectangle\" x=\"0\" y=\"0\" width=\"64\" height=\"64\"></rect>\n        </g>\n        <path d=\"M41.5,43.5 C40.397,43.5 39.5,42.603 39.5,41.5 C39.5,40.397 40.397,39.5 41.5,39.5 C42.603,39.5 43.5,40.397 43.5,41.5 C43.5,42.603 42.603,43.5 41.5,43.5 L41.5,43.5 Z M41.5,37.5 C39.294,37.5 37.5,39.294 37.5,41.5 C37.5,43.706 39.294,45.5 41.5,45.5 C43.706,45.5 45.5,43.706 45.5,41.5 C45.5,39.294 43.706,37.5 41.5,37.5 L41.5,37.5 Z M22.5,32.5 C21.397,32.5 20.5,31.603 20.5,30.5 C20.5,29.397 21.397,28.5 22.5,28.5 C23.603,28.5 24.5,29.397 24.5,30.5 C24.5,31.603 23.603,32.5 22.5,32.5 L22.5,32.5 Z M22.5,26.5 C20.294,26.5 18.5,28.294 18.5,30.5 C18.5,32.706 20.294,34.5 22.5,34.5 C24.706,34.5 26.5,32.706 26.5,30.5 C26.5,28.294 24.706,26.5 22.5,26.5 L22.5,26.5 Z M45.389,47.124 C45.168,46.607 44.936,46.094 44.685,45.591 L42.896,46.486 C43.17,47.035 43.42,47.599 43.656,48.165 C42.82,48.762 41.943,49.288 41.028,49.74 C41.384,48.865 41.694,47.975 41.974,47.012 L40.054,46.454 C39.564,48.134 38.985,49.581 38.184,51.133 C36.357,51.698 34.452,52 32.5,52 C29.465,52 26.567,51.314 23.871,49.976 C22.503,46.615 21.838,43.534 21.838,40.559 C21.838,39.267 22.063,38.196 22.322,36.956 C22.386,36.652 22.45,36.343 22.514,36.024 L20.551,35.638 C20.49,35.949 20.427,36.25 20.365,36.545 C20.094,37.838 19.838,39.06 19.838,40.559 C19.838,43.074 20.274,45.644 21.154,48.354 C16.072,44.724 13,38.854 13,32.5 C13,32.389 13.01,32.273 13.012,32.161 C14.642,31.799 16.123,31.614 17.854,31.571 L17.804,29.572 C16.169,29.612 14.694,29.779 13.163,30.084 C14.081,22.683 19.212,16.394 26.323,14.019 C27.873,14.818 29.02,15.524 30.135,16.37 L31.344,14.776 C30.646,14.248 29.934,13.771 29.146,13.299 C30.244,13.108 31.363,13 32.5,13 C35.032,13 37.532,13.494 39.849,14.439 C39.342,14.593 38.82,14.763 38.243,14.971 L38.923,16.852 C40.316,16.349 41.408,16.04 42.571,15.821 C48.399,19.341 52,25.667 52,32.5 C52,38.156 49.605,43.416 45.389,47.124 L45.389,47.124 Z M43.008,13.749 C39.826,11.95 36.192,11 32.5,11 C30.392,11 28.324,11.301 26.357,11.895 C17.723,14.464 11.568,22.23 11.045,31.196 C11.01,31.625 11,32.062 11,32.5 C11,40.444 15.352,47.707 22.354,51.455 C25.459,53.12 28.968,54 32.5,54 C34.892,54 37.229,53.61 39.437,52.843 C41.684,52.086 43.773,50.963 45.646,49.507 C50.955,45.399 54,39.2 54,32.5 C54,24.732 49.787,17.546 43.008,13.749 L43.008,13.749 Z M38.384,37.411 L37.003,38.858 C34.022,36.015 31.047,34.146 27.637,32.975 L28.287,31.083 C31.979,32.351 35.188,34.362 38.384,37.411 L38.384,37.411 Z M38.444,22.364 C41.282,26.692 42.88,31.444 43.193,36.488 L41.197,36.612 C40.905,31.919 39.417,27.495 36.772,23.46 L38.444,22.364 Z M26.451,26.797 L24.773,25.708 C26.316,23.332 27.639,21.758 29.336,20.278 L30.65,21.786 C29.103,23.135 27.886,24.587 26.451,26.797 L26.451,26.797 Z M34.5,16.5 C35.603,16.5 36.5,17.397 36.5,18.5 C36.5,19.603 35.603,20.5 34.5,20.5 C33.397,20.5 32.5,19.603 32.5,18.5 C32.5,17.397 33.397,16.5 34.5,16.5 L34.5,16.5 Z M34.5,22.5 C36.706,22.5 38.5,20.706 38.5,18.5 C38.5,16.294 36.706,14.5 34.5,14.5 C32.294,14.5 30.5,16.294 30.5,18.5 C30.5,20.706 32.294,22.5 34.5,22.5 L34.5,22.5 Z\" id=\"Amazon-CloudFront_Icon_48_Squid\" fill=\"#FFFFFF\"></path>\n    </g>\n</svg>", "color": "#8C4FFF", "serviceIds": ["frontend.aws_cloudfront_distribution.frontend"], "serviceNames": ["Frontend"]}, "waf": {"count": 1, "label": "Waf", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#DD344C\" fill-opacity=\"0.15\" stroke=\"#DD344C\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#DD344C\">WAF</text>\n</svg>", "color": "#DD344C", "serviceIds": ["frontend.aws_wafv2_web_acl.frontend"], "serviceNames": ["Frontend"]}, "sns": {"count": 1, "label": "Sns", "defaultAggregated": false, "iconHtml": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\">\n  <rect width=\"48\" height=\"48\" rx=\"4\" fill=\"#E7157B\" fill-opacity=\"0.15\" stroke=\"#E7157B\" stroke-width=\"2\"/>\n  <text x=\"24.0\" y=\"28.0\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"12.0\" font-weight=\"bold\" fill=\"#E7157B\">SNS</text>\n</svg>", "color": "#E7157B", "serviceIds": ["monitoring.aws_sns_topic.alerts"], "serviceNames": ["Alerts"]}}};
+    </script>
+    <script>
+        // Service positions storage
+        const servicePositions = {};
+        const iconSize = 89;
+        let originalPositions = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initDragAndDrop();
+            initTooltips();
+            initHighlighting();
+            updateAllConnections();
+            saveOriginalPositions();
+            initAggregation();
+            initConnectionTypeFilter();
+        });
+
+        function saveOriginalPositions() {
+            document.querySelectorAll('.service').forEach(el => {
+                const id = el.dataset.serviceId;
+                const transform = el.getAttribute('transform');
+                const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+                if (match) {
+                    originalPositions[id] = { x: parseFloat(match[1]), y: parseFloat(match[2]) };
+                    servicePositions[id] = { ...originalPositions[id] };
+                }
+            });
+        }
+
+        function initDragAndDrop() {
+            const svg = document.getElementById('diagram-svg');
+            let dragging = null;
+            let offset = { x: 0, y: 0 };
+
+            // Use event delegation on SVG for mousedown to handle dynamically created nodes
+            svg.addEventListener('mousedown', (e) => {
+                const target = e.target.closest('.service.draggable');
+                if (target) startDrag(e, target);
+            });
+            svg.addEventListener('mousemove', drag);
+            svg.addEventListener('mouseup', endDrag);
+            svg.addEventListener('mouseleave', endDrag);
+
+            function startDrag(e, targetEl) {
+                e.preventDefault();
+
+                // Guard against null CTM (can happen during rendering)
+                const ctm = svg.getScreenCTM();
+                if (!ctm) return;
+
+                dragging = targetEl;
+                dragging.classList.add('dragging');
+                dragging.style.cursor = 'grabbing';
+
+                const pt = svg.createSVGPoint();
+                pt.x = e.clientX;
+                pt.y = e.clientY;
+                const svgP = pt.matrixTransform(ctm.inverse());
+
+                // Validate coordinates to prevent NaN issues
+                if (isNaN(svgP.x) || isNaN(svgP.y)) {
+                    dragging.classList.remove('dragging');
+                    dragging.style.cursor = 'grab';
+                    dragging = null;
+                    return;
+                }
+
+                const id = dragging.dataset.serviceId;
+                const pos = servicePositions[id] || { x: 0, y: 0 };
+                offset.x = svgP.x - pos.x;
+                offset.y = svgP.y - pos.y;
+
+                // Hide tooltip while dragging
+                document.getElementById('tooltip').style.display = 'none';
+            }
+
+            function drag(e) {
+                if (!dragging) return;
+
+                // Guard against null CTM
+                const ctm = svg.getScreenCTM();
+                if (!ctm) return;
+
+                const pt = svg.createSVGPoint();
+                pt.x = e.clientX;
+                pt.y = e.clientY;
+                const svgP = pt.matrixTransform(ctm.inverse());
+
+                // Validate coordinates to prevent NaN issues
+                if (isNaN(svgP.x) || isNaN(svgP.y)) return;
+
+                let newX = svgP.x - offset.x;
+                let newY = svgP.y - offset.y;
+
+                // Check if service belongs to a specific subnet
+                const subnetId = dragging.dataset.subnetId;
+                if (subnetId) {
+                    // Constrain to subnet bounds
+                    const subnetGroup = document.querySelector(`.subnet[data-subnet-id="${subnetId}"]`);
+                    if (subnetGroup) {
+                        const padding = 10;
+                        const minX = parseFloat(subnetGroup.dataset.minX) + padding;
+                        const minY = parseFloat(subnetGroup.dataset.minY) + padding;
+                        const maxX = parseFloat(subnetGroup.dataset.maxX) - iconSize - padding;
+                        const maxY = parseFloat(subnetGroup.dataset.maxY) - iconSize - padding;
+
+                        newX = Math.max(minX, Math.min(maxX, newX));
+                        newY = Math.max(minY, Math.min(maxY, newY));
+                    }
+                } else if (dragging.dataset.isVpc === 'true') {
+                    // Constrain to VPC bounds
+                    const vpcGroup = document.querySelector('.group-vpc .group-bg');
+                    if (vpcGroup) {
+                        const minX = parseFloat(vpcGroup.dataset.minX) + 20;
+                        const minY = parseFloat(vpcGroup.dataset.minY) + 40;
+                        const maxX = parseFloat(vpcGroup.dataset.maxX) - iconSize - 20;
+                        const maxY = parseFloat(vpcGroup.dataset.maxY) - iconSize - 40;
+
+                        newX = Math.max(minX, Math.min(maxX, newX));
+                        newY = Math.max(minY, Math.min(maxY, newY));
+
+                        // VPC services without subnet assignment cannot enter subnet areas
+                        if (!dragging.dataset.subnetId) {
+                            document.querySelectorAll('.subnet').forEach(sub => {
+                                const sMinX = parseFloat(sub.dataset.minX);
+                                const sMinY = parseFloat(sub.dataset.minY);
+                                const sMaxX = parseFloat(sub.dataset.maxX);
+                                const sMaxY = parseFloat(sub.dataset.maxY);
+                                const nodeR = newX + iconSize;
+                                const nodeB = newY + iconSize;
+                                if (nodeR > sMinX && newX < sMaxX && nodeB > sMinY && newY < sMaxY) {
+                                    const dL = Math.abs(nodeR - sMinX);
+                                    const dR = Math.abs(newX - sMaxX);
+                                    const dT = Math.abs(nodeB - sMinY);
+                                    const dB = Math.abs(newY - sMaxY);
+                                    const m = Math.min(dL, dR, dT, dB);
+                                    if (m === dT) newY = sMinY - iconSize;
+                                    else if (m === dB) newY = sMaxY;
+                                    else if (m === dL) newX = sMinX - iconSize;
+                                    else newX = sMaxX;
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    // AWS Cloud bounds - expandable downward
+                    const cloudGroup = document.querySelector('.group-aws_cloud .group-bg');
+                    if (cloudGroup) {
+                        const minX = parseFloat(cloudGroup.dataset.minX) + 20;
+                        const minY = parseFloat(cloudGroup.dataset.minY) + 40;
+                        const maxX = parseFloat(cloudGroup.dataset.maxX) - iconSize - 20;
+                        const currentMaxY = parseFloat(cloudGroup.dataset.maxY);
+
+                        // Constrain X and minY, but allow expansion downward
+                        newX = Math.max(minX, Math.min(maxX, newX));
+                        newY = Math.max(minY, newY);
+
+                        // Prevent global services from entering the VPC area
+                        const vpcBg = document.querySelector('.group-vpc .group-bg');
+                        if (vpcBg) {
+                            const vpcMinX = parseFloat(vpcBg.dataset.minX);
+                            const vpcMinY = parseFloat(vpcBg.dataset.minY);
+                            const vpcMaxX = parseFloat(vpcBg.dataset.maxX);
+                            const vpcMaxY = parseFloat(vpcBg.dataset.maxY);
+                            const nodeRight = newX + iconSize;
+                            const nodeBottom = newY + iconSize;
+
+                            // Check if node overlaps VPC box
+                            if (nodeRight > vpcMinX && newX < vpcMaxX &&
+                                nodeBottom > vpcMinY && newY < vpcMaxY) {
+                                // Push to nearest edge outside VPC
+                                const distLeft = Math.abs(nodeRight - vpcMinX);
+                                const distRight = Math.abs(newX - vpcMaxX);
+                                const distTop = Math.abs(nodeBottom - vpcMinY);
+                                const distBottom = Math.abs(newY - vpcMaxY);
+                                const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+                                if (minDist === distTop) newY = vpcMinY - iconSize;
+                                else if (minDist === distBottom) newY = vpcMaxY;
+                                else if (minDist === distLeft) newX = vpcMinX - iconSize;
+                                else newX = vpcMaxX;
+                            }
+                        }
+
+                        // Expand AWS Cloud box and canvas if dragging below current bounds
+                        const requiredBottom = newY + iconSize + 40;
+                        if (requiredBottom > currentMaxY) {
+                            expandCanvas(requiredBottom);
+                        }
+                    }
+                }
+
+                const id = dragging.dataset.serviceId;
+                servicePositions[id] = { x: newX, y: newY };
+
+                dragging.setAttribute('transform', `translate(${newX}, ${newY})`);
+                updateConnectionsFor(id);
+            }
+
+            function endDrag() {
+                if (dragging) {
+                    dragging.classList.remove('dragging');
+                    dragging.style.cursor = 'grab';
+                    dragging = null;
+                }
+            }
+        }
+
+        function expandCanvas(newBottom) {
+            const svg = document.getElementById('diagram-svg');
+            const cloudGroup = document.querySelector('.group-aws_cloud .group-bg');
+
+            if (!cloudGroup || !svg) return;
+
+            // Get current viewBox
+            const viewBox = svg.getAttribute('viewBox').split(' ').map(Number);
+            const currentHeight = viewBox[3];
+
+            // Small margin below content (matching layout.py)
+            const bottomMargin = 20;
+            const padding = 89 > 64 ? 45 : 30;  // Approximate padding based on scale
+            const newHeight = Math.max(currentHeight, newBottom + bottomMargin);
+
+            // Only expand if needed
+            if (newHeight <= currentHeight) return;
+
+            // Update SVG viewBox - this automatically resizes the container
+            svg.setAttribute('viewBox', `${viewBox[0]} ${viewBox[1]} ${viewBox[2]} ${newHeight}`);
+
+            // Expand AWS Cloud box to fill the entire canvas (minus margin)
+            const minY = parseFloat(cloudGroup.dataset.minY);
+            const newMaxY = newHeight - bottomMargin;
+
+            cloudGroup.dataset.maxY = newMaxY;
+
+            // Update the AWS Cloud rect to fill the space
+            const awsRect = document.querySelector('.group-aws_cloud rect');
+            if (awsRect) {
+                awsRect.setAttribute('height', newMaxY - minY);
+            }
+        }
+
+        var _baseUpdateConnectionsFor = function(serviceId) {
+            document.querySelectorAll('.connection').forEach(conn => {
+                if (conn.dataset.source === serviceId || conn.dataset.target === serviceId) {
+                    updateConnection(conn);
+                }
+            });
+        };
+        var updateConnectionsFor = _baseUpdateConnectionsFor;
+
+        function updateAllConnections() {
+            document.querySelectorAll('.connection').forEach(updateConnection);
+        }
+
+        function updateConnection(connEl) {
+            const sourceId = connEl.dataset.source;
+            const targetId = connEl.dataset.target;
+
+            const sourcePos = servicePositions[sourceId];
+            const targetPos = servicePositions[targetId];
+
+            if (!sourcePos || !targetPos) return;
+
+            // Calculate center points
+            const halfSize = iconSize / 2;
+            let sx = sourcePos.x + halfSize;
+            let sy = sourcePos.y + halfSize;
+            let tx = targetPos.x + halfSize;
+            let ty = targetPos.y + halfSize;
+
+            // Adjust to connect from edges
+            if (Math.abs(ty - sy) > Math.abs(tx - sx)) {
+                // Mostly vertical
+                if (ty > sy) {
+                    sy = sourcePos.y + iconSize + 8;
+                    ty = targetPos.y - 8;
+                } else {
+                    sy = sourcePos.y - 8;
+                    ty = targetPos.y + iconSize + 8;
+                }
+            } else {
+                // Mostly horizontal
+                if (tx > sx) {
+                    sx = sourcePos.x + iconSize + 8;
+                    tx = targetPos.x - 8;
+                } else {
+                    sx = sourcePos.x - 8;
+                    tx = targetPos.x + iconSize + 8;
+                }
+            }
+
+            // Quadratic curve path (matches server-side rendering)
+            const midX = (sx + tx) / 2;
+            const midY = (sy + ty) / 2;
+            const path = `M ${sx} ${sy} Q ${midX} ${sy}, ${midX} ${midY} T ${tx} ${ty}`;
+
+            const pathEl = connEl.querySelector('.connection-path');
+            const hitareaEl = connEl.querySelector('.connection-hitarea');
+            if (pathEl) {
+                pathEl.setAttribute('d', path);
+            }
+            if (hitareaEl) {
+                hitareaEl.setAttribute('d', path);
+            }
+
+            // Update multiplicity label position if present
+            const multLabel = connEl.querySelector('.multiplicity-label');
+            if (multLabel) {
+                const labelMidX = (sourcePos.x + targetPos.x) / 2 + halfSize;
+                const labelMidY = (sourcePos.y + targetPos.y) / 2 + halfSize;
+                multLabel.setAttribute('x', `${labelMidX + 8}`);
+                multLabel.setAttribute('y', `${labelMidY - 5}`);
+            }
+        }
+
+        // ============ HIGHLIGHTING SYSTEM ============
+        let currentHighlight = null;
+
+        function initHighlighting() {
+            const svg = document.getElementById('diagram-svg');
+
+            // Use event delegation on SVG for dynamic element support
+            svg.addEventListener('click', (e) => {
+                // Check if clicked on a service
+                const serviceEl = e.target.closest('.service');
+                if (serviceEl) {
+                    if (serviceEl.classList.contains('dragging')) return;
+                    // Don't interfere with aggregate node popover (handled separately)
+                    if (serviceEl.classList.contains('aggregate-node')) return;
+                    e.stopPropagation();
+
+                    const serviceId = serviceEl.dataset.serviceId;
+                    if (currentHighlight === serviceId) {
+                        clearHighlights();
+                    } else {
+                        highlightService(serviceId);
+                    }
+                    return;
+                }
+
+                // Check if clicked on a connection
+                const connEl = e.target.closest('.connection');
+                if (connEl) {
+                    e.stopPropagation();
+                    const sourceId = connEl.dataset.source;
+                    const targetId = connEl.dataset.target;
+                    const connKey = `conn:${sourceId}->${targetId}`;
+                    if (currentHighlight === connKey) {
+                        clearHighlights();
+                    } else {
+                        highlightConnection(connEl, sourceId, targetId);
+                    }
+                    return;
+                }
+
+                // Clicked on background
+                if (e.target.tagName === 'svg' || e.target.classList.contains('group-bg')) {
+                    clearHighlights();
+                }
+            });
+        }
+
+        function highlightService(serviceId) {
+            clearHighlights();
+            currentHighlight = serviceId;
+
+            // Find all connections involving this service
+            const connectedServiceIds = new Set([serviceId]);
+            const connectedConnections = [];
+
+            document.querySelectorAll('.connection:not(.conn-type-hidden)').forEach(conn => {
+                const srcId = conn.dataset.source;
+                const tgtId = conn.dataset.target;
+
+                if (srcId === serviceId || tgtId === serviceId) {
+                    connectedServiceIds.add(srcId);
+                    connectedServiceIds.add(tgtId);
+                    connectedConnections.push(conn);
+                }
+            });
+
+            // Dim all services and connections
+            document.querySelectorAll('.service').forEach(el => {
+                el.classList.add('dimmed');
+            });
+            document.querySelectorAll('.connection').forEach(el => {
+                el.classList.add('dimmed');
+            });
+
+            // Highlight connected services
+            document.querySelectorAll('.service').forEach(el => {
+                const elId = el.dataset.serviceId;
+                if (connectedServiceIds.has(elId)) {
+                    el.classList.remove('dimmed');
+                    el.classList.add('highlighted');
+                }
+            });
+
+            // Highlight connections
+            connectedConnections.forEach(conn => {
+                conn.classList.remove('dimmed');
+                conn.classList.add('highlighted');
+            });
+
+            // Show info tooltip
+            showHighlightInfo(serviceId, connectedServiceIds.size - 1, connectedConnections.length);
+        }
+
+        function highlightConnection(connEl, sourceId, targetId) {
+            clearHighlights();
+            currentHighlight = `conn:${sourceId}->${targetId}`;
+
+            // Dim all
+            document.querySelectorAll('.service').forEach(el => {
+                el.classList.add('dimmed');
+            });
+            document.querySelectorAll('.connection').forEach(el => {
+                el.classList.add('dimmed');
+            });
+
+            // Highlight the connection
+            connEl.classList.remove('dimmed');
+            connEl.classList.add('highlighted');
+
+            // Highlight source and target services
+            const sourceEl = document.querySelector(`[data-service-id="${sourceId}"]`);
+            const targetEl = document.querySelector(`[data-service-id="${targetId}"]`);
+
+            if (sourceEl) {
+                sourceEl.classList.remove('dimmed');
+                sourceEl.classList.add('highlighted');
+            }
+            if (targetEl) {
+                targetEl.classList.remove('dimmed');
+                targetEl.classList.add('highlighted');
+            }
+
+            // Show connection info
+            const label = connEl.dataset.label || connEl.dataset.connType;
+            const sourceName = sourceEl ? sourceEl.dataset.tooltip.split(' (')[0] : sourceId;
+            const targetName = targetEl ? targetEl.dataset.tooltip.split(' (')[0] : targetId;
+            showConnectionInfo(sourceName, targetName, label);
+        }
+
+        function clearHighlights() {
+            currentHighlight = null;
+
+            document.querySelectorAll('.service').forEach(el => {
+                el.classList.remove('dimmed', 'highlighted');
+            });
+            document.querySelectorAll('.connection').forEach(el => {
+                el.classList.remove('dimmed', 'highlighted');
+            });
+
+            hideHighlightInfo();
+        }
+
+        function showHighlightInfo(serviceId, connectedCount, connectionCount) {
+            const el = document.querySelector(`[data-service-id="${serviceId}"]`);
+            const name = el ? el.dataset.tooltip.split(' (')[0] : serviceId;
+
+            const infoEl = document.getElementById('highlight-info');
+            infoEl.innerHTML = `
+                <strong>${name}</strong><br>
+                Connected to ${connectedCount} service${connectedCount !== 1 ? 's' : ''}<br>
+                ${connectionCount} connection${connectionCount !== 1 ? 's' : ''}
+                <br><small>Click elsewhere to clear</small>
+            `;
+            infoEl.style.display = 'block';
+        }
+
+        function showConnectionInfo(sourceName, targetName, label) {
+            const infoEl = document.getElementById('highlight-info');
+            infoEl.innerHTML = `
+                <strong>${sourceName}</strong><br>
+                ↓ ${label}<br>
+                <strong>${targetName}</strong>
+                <br><small>Click elsewhere to clear</small>
+            `;
+            infoEl.style.display = 'block';
+        }
+
+        function hideHighlightInfo() {
+            document.getElementById('highlight-info').style.display = 'none';
+        }
+
+        function initTooltips() {
+            const tooltip = document.getElementById('tooltip');
+            const svg = document.getElementById('diagram-svg');
+            let tooltipTarget = null;
+
+            // Use event delegation on SVG for tooltip support on dynamic elements
+            svg.addEventListener('mouseover', (e) => {
+                const service = e.target.closest('.service');
+                if (service && service !== tooltipTarget) {
+                    tooltipTarget = service;
+                    if (service.classList.contains('dragging')) return;
+                    const data = service.dataset.tooltip;
+                    if (data) {
+                        tooltip.textContent = data;
+                        tooltip.style.display = 'block';
+                    }
+                }
+            });
+            svg.addEventListener('mousemove', (e) => {
+                if (tooltipTarget && !tooltipTarget.classList.contains('dragging')) {
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                }
+            });
+            svg.addEventListener('mouseout', (e) => {
+                const service = e.target.closest('.service');
+                if (service && service === tooltipTarget) {
+                    // Check if we're leaving to a child element (not really leaving)
+                    const related = e.relatedTarget;
+                    if (related && service.contains(related)) return;
+                    tooltipTarget = null;
+                    tooltip.style.display = 'none';
+                }
+            });
+        }
+
+        var resetPositions = function() {
+            Object.keys(originalPositions).forEach(id => {
+                servicePositions[id] = { ...originalPositions[id] };
+                const el = document.querySelector(`[data-service-id="${id}"]`);
+                if (el) {
+                    el.setAttribute('transform', `translate(${originalPositions[id].x}, ${originalPositions[id].y})`);
+                }
+            });
+            updateAllConnections();
+        };
+
+        var savePositions = function() {
+            const data = JSON.stringify(servicePositions);
+            localStorage.setItem('diagramPositions', data);
+            alert('Layout saved to browser storage!');
+        };
+
+        var loadPositions = function() {
+            const data = localStorage.getItem('diagramPositions');
+            if (!data) {
+                alert('No saved layout found.');
+                return;
+            }
+
+            const saved = JSON.parse(data);
+            Object.keys(saved).forEach(id => {
+                if (servicePositions[id]) {
+                    servicePositions[id] = saved[id];
+                    const el = document.querySelector(`[data-service-id="${id}"]`);
+                    if (el) {
+                        el.setAttribute('transform', `translate(${saved[id].x}, ${saved[id].y})`);
+                    }
+                }
+            });
+            updateAllConnections();
+            alert('Layout loaded!');
+        };
+
+        function exportAs(format) {
+            const svg = document.getElementById('diagram-svg');
+            const canvas = document.getElementById('export-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const vbW = svg.viewBox.baseVal.width;
+            const vbH = svg.viewBox.baseVal.height;
+            const scale = 2; // Higher resolution
+            canvas.width = vbW * scale;
+            canvas.height = vbH * scale;
+
+            // Clone SVG so we can modify attributes for standalone rendering
+            const svgClone = svg.cloneNode(true);
+            // Set explicit pixel dimensions (width="100%" won't resolve in a blob image)
+            svgClone.setAttribute('width', vbW);
+            svgClone.setAttribute('height', vbH);
+            svgClone.removeAttribute('style');
+
+            // Embed essential CSS inside the SVG for standalone rendering
+            const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+            styleEl.textContent = `
+                .agg-hidden { display: none !important; }
+                .conn-type-hidden { display: none !important; }
+            `;
+            svgClone.insertBefore(styleEl, svgClone.firstChild);
+
+            // Serialize and encode as data URI (avoids canvas taint from blob URLs)
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+            const dataUri = 'data:image/svg+xml;base64,' + svgBase64;
+
+            const img = new Image();
+            img.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                try {
+                    const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                    const quality = format === 'jpg' ? 0.95 : undefined;
+                    const dataUrl = canvas.toDataURL(mimeType, quality);
+
+                    const preview = document.getElementById('export-preview');
+                    const download = document.getElementById('export-download');
+
+                    preview.src = dataUrl;
+                    download.href = dataUrl;
+                    download.download = `aws-diagram.${format}`;
+
+                    document.getElementById('export-modal').classList.add('active');
+                } catch (err) {
+                    alert('Export failed: ' + err.message);
+                }
+            };
+            img.onerror = () => {
+                alert('Failed to render SVG for export.');
+            };
+            img.src = dataUri;
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.getElementById('export-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'export-modal') {
+                closeExportModal();
+            }
+        });
+
+        // ============ AGGREGATION SYSTEM ============
+        const aggregationState = {};       // { serviceType: bool } true=aggregated
+        const originalConnections = [];      // snapshot of all original connections
+        const aggregateNodes = {};          // { serviceType: SVGGElement }
+        const aggregateConnections = {};    // { serviceType: [SVGGElement...] }
+        let activePopover = null;
+        let selectedPopoverResource = null;
+
+        // Connection type filter state: { connType: bool } true=visible
+        const CONNECTION_TYPES = [
+            { id: 'data_flow', label: 'Data Flow', color: '#3B48CC' },
+            { id: 'trigger', label: 'Event Trigger', color: '#E7157B' },
+            { id: 'encrypt', label: 'Encryption', color: '#6c757d' },
+            { id: 'network_flow', label: 'Network Flow', color: '#0d7c3f' },
+            { id: 'security_rule', label: 'Security Rule', color: '#d97706' },
+            { id: 'default', label: 'Reference', color: '#999999' }
+        ];
+        const connTypeFilterState = {};
+
+        function initAggregation() {
+            if (!AGGREGATION_CONFIG || !AGGREGATION_CONFIG.groups) return;
+
+            // Check if any group qualifies for aggregation
+            const qualifyingGroups = Object.entries(AGGREGATION_CONFIG.groups)
+                .filter(([_, g]) => g.count >= AGGREGATION_CONFIG.threshold);
+            if (qualifyingGroups.length === 0) return;
+
+            // Snapshot all original connections from DOM
+            snapshotConnections();
+
+            // Load saved state from localStorage or use defaults
+            const savedState = localStorage.getItem('diagramAggregationState');
+            let loaded = null;
+            if (savedState) {
+                try { loaded = JSON.parse(savedState); } catch(e) {}
+            }
+
+            for (const [stype, group] of Object.entries(AGGREGATION_CONFIG.groups)) {
+                if (group.count >= AGGREGATION_CONFIG.threshold) {
+                    aggregationState[stype] = loaded ? !!loaded[stype] : group.defaultAggregated;
+                }
+            }
+
+            // Render chip panel
+            renderChipPanel();
+
+            // Apply initial aggregation (skip per-group connection recalc)
+            for (const [stype, isAgg] of Object.entries(aggregationState)) {
+                if (isAgg) {
+                    aggregateGroup(stype, true);
+                }
+            }
+
+            // Recalculate all connections once, considering all aggregated groups
+            recalculateAllAggregateConnections();
+        }
+
+        function snapshotConnections() {
+            originalConnections.length = 0;
+            document.querySelectorAll('.connection').forEach(conn => {
+                originalConnections.push({
+                    element: conn,
+                    sourceId: conn.dataset.source,
+                    targetId: conn.dataset.target,
+                    sourceType: conn.dataset.sourceType || '',
+                    targetType: conn.dataset.targetType || '',
+                    label: conn.dataset.label || '',
+                    connType: conn.dataset.connType || 'default',
+                });
+            });
+        }
+
+        function getServiceNodesForType(serviceType) {
+            return Array.from(document.querySelectorAll(`.service[data-service-type="${serviceType}"]`))
+                .filter(el => !el.classList.contains('aggregate-node'));
+        }
+
+        function computeCentroid(serviceType) {
+            const group = AGGREGATION_CONFIG.groups[serviceType];
+            if (!group) return { x: 0, y: 0 };
+            let sumX = 0, sumY = 0, count = 0;
+            for (const sid of group.serviceIds) {
+                const pos = servicePositions[sid];
+                if (pos) {
+                    sumX += pos.x;
+                    sumY += pos.y;
+                    count++;
+                }
+            }
+            if (count === 0) return { x: 100, y: 100 };
+            return { x: sumX / count, y: sumY / count };
+        }
+
+        function aggregateGroup(serviceType, skipConnectionRecalc) {
+            const group = AGGREGATION_CONFIG.groups[serviceType];
+            if (!group) return;
+
+            // Hide individual nodes
+            for (const sid of group.serviceIds) {
+                const el = document.querySelector(`[data-service-id="${sid}"]`);
+                if (el) el.classList.add('agg-hidden');
+            }
+
+            // Calculate centroid
+            const centroid = computeCentroid(serviceType);
+
+            // Create aggregate node in SVG
+            const svg = document.getElementById('diagram-svg');
+            const servicesLayer = document.getElementById('services-layer');
+
+            const aggG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            aggG.classList.add('service', 'draggable', 'aggregate-node');
+            aggG.dataset.serviceId = `__agg_${serviceType}`;
+            aggG.dataset.serviceType = serviceType;
+            aggG.dataset.tooltip = `${group.label} (${group.count} resources - click to inspect)`;
+            // Inherit VPC status from the first service in the group
+            const firstNode = document.querySelector(`[data-service-id="${group.serviceIds[0]}"]`);
+            aggG.dataset.isVpc = (firstNode && firstNode.dataset.isVpc === 'true') ? 'true' : 'false';
+            aggG.setAttribute('transform', `translate(${centroid.x}, ${centroid.y})`);
+            aggG.style.cursor = 'pointer';
+
+            // Background rect (dashed border)
+            const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bgRect.classList.add('service-bg');
+            bgRect.setAttribute('x', '-8');
+            bgRect.setAttribute('y', '-8');
+            bgRect.setAttribute('width', `${iconSize + 16}`);
+            bgRect.setAttribute('height', `${iconSize + 36}`);
+            bgRect.setAttribute('fill', 'white');
+            bgRect.setAttribute('stroke', group.color || '#999');
+            bgRect.setAttribute('stroke-width', '2');
+            bgRect.setAttribute('stroke-dasharray', '6,3');
+            bgRect.setAttribute('rx', '8');
+            bgRect.setAttribute('ry', '8');
+            bgRect.setAttribute('filter', 'url(#shadow)');
+            aggG.appendChild(bgRect);
+
+            // Icon
+            if (group.iconHtml) {
+                const foreignObj = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+                foreignObj.setAttribute('x', '0');
+                foreignObj.setAttribute('y', '0');
+                foreignObj.setAttribute('width', `${iconSize}`);
+                foreignObj.setAttribute('height', `${iconSize}`);
+                const div = document.createElement('div');
+                div.innerHTML = group.iconHtml;
+                div.style.width = `${iconSize}px`;
+                div.style.height = `${iconSize}px`;
+                const innerSvg = div.querySelector('svg');
+                if (innerSvg) {
+                    innerSvg.setAttribute('width', `${iconSize}`);
+                    innerSvg.setAttribute('height', `${iconSize}`);
+                }
+                foreignObj.appendChild(div);
+                aggG.appendChild(foreignObj);
+            }
+
+            // Label
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.classList.add('service-label');
+            label.setAttribute('x', `${iconSize / 2}`);
+            label.setAttribute('y', `${iconSize + 16}`);
+            label.setAttribute('font-family', 'Arial, sans-serif');
+            label.setAttribute('font-size', '12');
+            label.setAttribute('fill', '#333');
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('font-weight', '500');
+            label.textContent = `${group.label} (${group.count})`;
+            aggG.appendChild(label);
+
+            // Count badge
+            const badgeCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            badgeCircle.classList.add('aggregate-badge');
+            badgeCircle.setAttribute('cx', `${iconSize + 8 - 8}`);
+            badgeCircle.setAttribute('cy', '8');
+            badgeCircle.setAttribute('r', '12');
+            badgeCircle.setAttribute('fill', group.color || '#ff9900');
+            badgeCircle.setAttribute('stroke', 'white');
+            badgeCircle.setAttribute('stroke-width', '2');
+            aggG.appendChild(badgeCircle);
+
+            const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            badgeText.classList.add('aggregate-badge');
+            badgeText.setAttribute('x', `${iconSize + 8 - 8}`);
+            badgeText.setAttribute('y', '12');
+            badgeText.setAttribute('font-family', 'Arial, sans-serif');
+            badgeText.setAttribute('font-size', '11');
+            badgeText.setAttribute('fill', 'white');
+            badgeText.setAttribute('text-anchor', 'middle');
+            badgeText.setAttribute('font-weight', 'bold');
+            badgeText.textContent = group.count;
+            aggG.appendChild(badgeText);
+
+            servicesLayer.appendChild(aggG);
+            aggregateNodes[serviceType] = aggG;
+
+            // Register position
+            servicePositions[`__agg_${serviceType}`] = { x: centroid.x, y: centroid.y };
+
+            // Setup drag for aggregate node
+            aggG.addEventListener('mousedown', (e) => {
+                // Drag is handled by the existing drag system since we add .draggable class
+                // But we also need click for popover — distinguish via a moved flag
+            });
+
+            // Setup click for popover (using mouseup without movement)
+            let aggDragStartPos = null;
+            aggG.addEventListener('mousedown', (e) => {
+                aggDragStartPos = { x: e.clientX, y: e.clientY };
+            });
+            aggG.addEventListener('mouseup', (e) => {
+                if (aggDragStartPos) {
+                    const dx = Math.abs(e.clientX - aggDragStartPos.x);
+                    const dy = Math.abs(e.clientY - aggDragStartPos.y);
+                    if (dx < 5 && dy < 5) {
+                        // This was a click, not a drag — show popover
+                        // Do NOT stopPropagation: SVG mouseup must fire to clear drag state
+                        showAggregatePopover(serviceType, e.clientX, e.clientY);
+                    }
+                }
+                aggDragStartPos = null;
+            });
+
+            // Re-route all connections (considers all aggregated groups)
+            if (!skipConnectionRecalc) {
+                recalculateAllAggregateConnections();
+            }
+        }
+
+        function deaggregateGroup(serviceType) {
+            const group = AGGREGATION_CONFIG.groups[serviceType];
+            if (!group) return;
+
+            // Close popover if open for this group
+            if (activePopover) {
+                closeAggregatePopover();
+            }
+
+            // Show individual nodes
+            for (const sid of group.serviceIds) {
+                const el = document.querySelector(`[data-service-id="${sid}"]`);
+                if (el) el.classList.remove('agg-hidden');
+            }
+
+            // Remove aggregate node
+            if (aggregateNodes[serviceType]) {
+                aggregateNodes[serviceType].remove();
+                delete aggregateNodes[serviceType];
+                delete servicePositions[`__agg_${serviceType}`];
+            }
+
+            // Recalculate all connections (considers remaining aggregated groups)
+            recalculateAllAggregateConnections();
+        }
+
+        // ============ CONNECTION RE-ROUTING ============
+        // Single function that recalculates ALL aggregate connections
+        // considering ALL currently aggregated groups at once.
+        // This avoids cross-group issues where group A's aggregate connections
+        // point to individual nodes of group B that are now hidden.
+        function recalculateAllAggregateConnections() {
+            // 1. Remove ALL existing aggregate connections
+            for (const [stype, conns] of Object.entries(aggregateConnections)) {
+                conns.forEach(c => c.remove());
+            }
+            for (const k of Object.keys(aggregateConnections)) delete aggregateConnections[k];
+
+            // 2. Reset hidden state on ALL original connections
+            for (const conn of originalConnections) {
+                conn.element.classList.remove('agg-hidden');
+            }
+
+            // 3. Build a map: serviceId -> aggregated group type (or null)
+            const idToAggGroup = {};
+            for (const [stype, isAgg] of Object.entries(aggregationState)) {
+                if (!isAgg) continue;
+                const group = AGGREGATION_CONFIG.groups[stype];
+                if (!group) continue;
+                for (const sid of group.serviceIds) {
+                    idToAggGroup[sid] = stype;
+                }
+            }
+
+            // 4. Process each original connection: hide and build merged map
+            // Key for merged map: "resolvedSource|resolvedTarget|connType"
+            // where resolvedSource/Target is either the original ID or __agg_<type>
+            const mergedMap = {};
+
+            for (const conn of originalConnections) {
+                const srcGroup = idToAggGroup[conn.sourceId] || null;
+                const tgtGroup = idToAggGroup[conn.targetId] || null;
+
+                if (!srcGroup && !tgtGroup) {
+                    // Neither endpoint is aggregated: leave visible
+                    continue;
+                }
+
+                // At least one endpoint is aggregated: hide original
+                conn.element.classList.add('agg-hidden');
+
+                if (srcGroup && tgtGroup && srcGroup === tgtGroup) {
+                    // Both in same group: hide entirely, no aggregate connection
+                    continue;
+                }
+
+                // Resolve endpoints: use aggregate node ID if in an aggregated group
+                const resolvedSource = srcGroup ? `__agg_${srcGroup}` : conn.sourceId;
+                const resolvedTarget = tgtGroup ? `__agg_${tgtGroup}` : conn.targetId;
+
+                const key = `${resolvedSource}|${resolvedTarget}|${conn.connType}`;
+                if (!mergedMap[key]) {
+                    mergedMap[key] = {
+                        sourceId: resolvedSource,
+                        targetId: resolvedTarget,
+                        connType: conn.connType,
+                        label: conn.label,
+                        count: 0,
+                    };
+                }
+                mergedMap[key].count++;
+            }
+
+            // 5. Create aggregate connections from merged map
+            const connLayer = document.getElementById('connections-layer');
+            const styles = {
+                'data_flow': { color: '#3B48CC', dash: '', marker: 'url(#arrowhead-data)' },
+                'trigger': { color: '#E7157B', dash: '', marker: 'url(#arrowhead-trigger)' },
+                'encrypt': { color: '#6c757d', dash: '4,4', marker: 'url(#arrowhead)' },
+                'network_flow': { color: '#0d7c3f', dash: '', marker: 'url(#arrowhead-network)' },
+                'security_rule': { color: '#d97706', dash: '2,4', marker: 'url(#arrowhead-security)' },
+                'default': { color: '#999999', dash: '', marker: 'url(#arrowhead)' },
+            };
+
+            // Group aggregate connections by which agg group they belong to (for tracking)
+            const newAggConns = {};
+
+            for (const [key, info] of Object.entries(mergedMap)) {
+                const style = styles[info.connType] || styles['default'];
+
+                const sourcePos = servicePositions[info.sourceId];
+                const targetPos = servicePositions[info.targetId];
+                if (!sourcePos || !targetPos) continue;
+
+                const pathD = calcConnectionPath(sourcePos, targetPos);
+                const strokeWidth = info.count > 4 ? 3.5 : info.count > 2 ? 2.5 : 1.5;
+
+                const connG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                connG.classList.add('connection', 'aggregate-connection');
+                connG.dataset.source = info.sourceId;
+                connG.dataset.target = info.targetId;
+                connG.dataset.sourceType = getServiceTypeById(info.sourceId) || '';
+                connG.dataset.targetType = getServiceTypeById(info.targetId) || '';
+                connG.dataset.connType = info.connType;
+                connG.dataset.label = info.label;
+                connG.dataset.multiplicity = info.count;
+
+                const hitarea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitarea.classList.add('connection-hitarea');
+                hitarea.setAttribute('d', pathD);
+                hitarea.setAttribute('fill', 'none');
+                hitarea.setAttribute('stroke', 'transparent');
+                hitarea.setAttribute('stroke-width', '15');
+                connG.appendChild(hitarea);
+
+                const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathEl.classList.add('connection-path');
+                pathEl.setAttribute('d', pathD);
+                pathEl.setAttribute('fill', 'none');
+                pathEl.setAttribute('stroke', style.color);
+                pathEl.setAttribute('stroke-width', `${strokeWidth}`);
+                if (style.dash) pathEl.setAttribute('stroke-dasharray', style.dash);
+                pathEl.setAttribute('marker-end', style.marker);
+                pathEl.setAttribute('opacity', '0.7');
+                connG.appendChild(pathEl);
+
+                if (info.count > 1) {
+                    const midX = (sourcePos.x + targetPos.x) / 2 + iconSize / 2;
+                    const midY = (sourcePos.y + targetPos.y) / 2 + iconSize / 2;
+                    const multLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    multLabel.classList.add('multiplicity-label');
+                    multLabel.setAttribute('x', `${midX + 8}`);
+                    multLabel.setAttribute('y', `${midY - 5}`);
+                    multLabel.setAttribute('font-family', 'Arial, sans-serif');
+                    multLabel.setAttribute('font-size', '10');
+                    multLabel.setAttribute('font-weight', 'bold');
+                    multLabel.setAttribute('fill', style.color);
+                    multLabel.textContent = `x${info.count}`;
+                    connG.appendChild(multLabel);
+                }
+
+                connLayer.appendChild(connG);
+
+                // Track by involved agg groups for cleanup
+                const involvedGroups = new Set();
+                if (info.sourceId.startsWith('__agg_')) involvedGroups.add(info.sourceId.replace('__agg_', ''));
+                if (info.targetId.startsWith('__agg_')) involvedGroups.add(info.targetId.replace('__agg_', ''));
+                for (const g of involvedGroups) {
+                    if (!newAggConns[g]) newAggConns[g] = [];
+                    newAggConns[g].push(connG);
+                }
+            }
+
+            // Update the global tracking object
+            for (const [g, conns] of Object.entries(newAggConns)) {
+                aggregateConnections[g] = conns;
+            }
+
+            // Re-apply connection type filter to new aggregate connections
+            applyConnTypeFilter();
+        }
+
+        function calcConnectionPath(sourcePos, targetPos) {
+            const halfSize = iconSize / 2;
+            let sx = sourcePos.x + halfSize;
+            let sy = sourcePos.y + halfSize;
+            let tx = targetPos.x + halfSize;
+            let ty = targetPos.y + halfSize;
+
+            if (Math.abs(ty - sy) > Math.abs(tx - sx)) {
+                if (ty > sy) {
+                    sy = sourcePos.y + iconSize + 8;
+                    ty = targetPos.y - 8;
+                } else {
+                    sy = sourcePos.y - 8;
+                    ty = targetPos.y + iconSize + 8;
+                }
+            } else {
+                if (tx > sx) {
+                    sx = sourcePos.x + iconSize + 8;
+                    tx = targetPos.x - 8;
+                } else {
+                    sx = sourcePos.x - 8;
+                    tx = targetPos.x + iconSize + 8;
+                }
+            }
+
+            const midX = (sx + tx) / 2;
+            const midY = (sy + ty) / 2;
+            return `M ${sx} ${sy} Q ${midX} ${sy}, ${midX} ${midY} T ${tx} ${ty}`;
+        }
+
+        function getServiceTypeById(serviceId) {
+            const el = document.querySelector(`[data-service-id="${serviceId}"]`);
+            return el ? (el.dataset.serviceType || '') : '';
+        }
+
+        // ============ CHIP PANEL ============
+        function renderChipPanel() {
+            const panel = document.getElementById('aggregation-panel');
+            const chipsContainer = document.getElementById('aggregation-chips');
+            if (!panel || !chipsContainer) return;
+
+            // Get qualifying groups sorted by count desc
+            const groups = Object.entries(AGGREGATION_CONFIG.groups)
+                .filter(([_, g]) => g.count >= AGGREGATION_CONFIG.threshold)
+                .sort((a, b) => b[1].count - a[1].count);
+
+            if (groups.length === 0) return;
+
+            panel.style.display = 'flex';
+            chipsContainer.innerHTML = '';
+
+            for (const [stype, group] of groups) {
+                const chip = document.createElement('div');
+                chip.classList.add('aggregation-chip');
+                chip.dataset.serviceType = stype;
+                const isActive = !!aggregationState[stype];
+                chip.classList.add(isActive ? 'active' : 'inactive');
+                const color = group.color || '#666';
+                chip.style.borderColor = color;
+                chip.style.backgroundColor = isActive ? color : 'transparent';
+                chip.style.color = isActive ? 'white' : color;
+
+                chip.innerHTML = `<span class="chip-check">${isActive ? '&#10003;' : ''}</span>${group.label} (${group.count})`;
+
+                chip.addEventListener('click', () => toggleAggregation(stype));
+                chipsContainer.appendChild(chip);
+            }
+        }
+
+        function toggleAggregation(serviceType) {
+            const wasAggregated = aggregationState[serviceType];
+            aggregationState[serviceType] = !wasAggregated;
+
+            if (aggregationState[serviceType]) {
+                aggregateGroup(serviceType);
+            } else {
+                deaggregateGroup(serviceType);
+            }
+
+            // Update chip visual
+            renderChipPanel();
+
+            // Save state
+            localStorage.setItem('diagramAggregationState', JSON.stringify(aggregationState));
+        }
+
+        // ============ CONNECTION TYPE FILTER ============
+        function initConnectionTypeFilter() {
+            // Load saved state or default all visible
+            const saved = localStorage.getItem('diagramConnTypeFilter');
+            let loaded = null;
+            if (saved) {
+                try { loaded = JSON.parse(saved); } catch(e) {}
+            }
+            for (const ct of CONNECTION_TYPES) {
+                connTypeFilterState[ct.id] = loaded ? (loaded[ct.id] !== false) : true;
+            }
+            renderConnFilterPanel();
+            applyConnTypeFilter();
+        }
+
+        function renderConnFilterPanel() {
+            const container = document.getElementById('conn-filter-chips');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (const ct of CONNECTION_TYPES) {
+                const chip = document.createElement('div');
+                chip.classList.add('conn-filter-chip');
+                const isActive = connTypeFilterState[ct.id] !== false;
+                chip.classList.add(isActive ? 'active' : 'inactive');
+                chip.style.borderColor = ct.color;
+                chip.style.backgroundColor = isActive ? ct.color : 'transparent';
+                chip.style.color = isActive ? 'white' : ct.color;
+                chip.innerHTML = `<span class="chip-check">${isActive ? '&#10003;' : ''}</span>${ct.label}`;
+                chip.addEventListener('click', () => toggleConnTypeFilter(ct.id));
+                container.appendChild(chip);
+            }
+        }
+
+        function toggleConnTypeFilter(connType) {
+            connTypeFilterState[connType] = connTypeFilterState[connType] === false;
+            applyConnTypeFilter();
+            renderConnFilterPanel();
+            localStorage.setItem('diagramConnTypeFilter', JSON.stringify(connTypeFilterState));
+        }
+
+        function applyConnTypeFilter() {
+            // Apply to original connections
+            document.querySelectorAll('.connection').forEach(conn => {
+                const ct = conn.dataset.connType || 'default';
+                if (connTypeFilterState[ct] === false) {
+                    conn.classList.add('conn-type-hidden');
+                } else {
+                    conn.classList.remove('conn-type-hidden');
+                }
+            });
+            // Apply to aggregate connections
+            for (const conns of Object.values(aggregateConnections)) {
+                conns.forEach(conn => {
+                    const ct = conn.dataset.connType || 'default';
+                    if (connTypeFilterState[ct] === false) {
+                        conn.classList.add('conn-type-hidden');
+                    } else {
+                        conn.classList.remove('conn-type-hidden');
+                    }
+                });
+            }
+        }
+
+        // ============ POPOVER ============
+        function showAggregatePopover(serviceType, clientX, clientY) {
+            closeAggregatePopover();
+            clearHighlights();
+
+            const group = AGGREGATION_CONFIG.groups[serviceType];
+            if (!group) return;
+
+            const popover = document.createElement('div');
+            popover.classList.add('aggregate-popover');
+            popover.id = 'aggregate-popover';
+
+            const header = document.createElement('div');
+            header.classList.add('aggregate-popover-header');
+            header.textContent = `${group.label} (${group.count})`;
+            popover.appendChild(header);
+
+            group.serviceIds.forEach((sid, idx) => {
+                const item = document.createElement('div');
+                item.classList.add('aggregate-popover-item');
+                item.dataset.resourceId = sid;
+
+                const iconDiv = document.createElement('div');
+                iconDiv.innerHTML = group.iconHtml || '';
+                const innerSvg = iconDiv.querySelector('svg');
+                if (innerSvg) {
+                    innerSvg.setAttribute('width', '24');
+                    innerSvg.setAttribute('height', '24');
+                }
+                item.appendChild(innerSvg || iconDiv);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = group.serviceNames[idx] || sid;
+                item.appendChild(nameSpan);
+
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectResourceInPopover(sid, serviceType, item);
+                });
+
+                popover.appendChild(item);
+            });
+
+            // Position popover near click
+            popover.style.left = `${clientX + 10}px`;
+            popover.style.top = `${clientY + 10}px`;
+
+            document.body.appendChild(popover);
+            activePopover = popover;
+
+            // Adjust if off-screen
+            const rect = popover.getBoundingClientRect();
+            if (rect.right > window.innerWidth) {
+                popover.style.left = `${clientX - rect.width - 10}px`;
+            }
+            if (rect.bottom > window.innerHeight) {
+                popover.style.top = `${clientY - rect.height - 10}px`;
+            }
+
+            // Close on click outside (delayed to avoid immediate close)
+            setTimeout(() => {
+                document.addEventListener('click', closePopoverOnOutsideClick);
+            }, 10);
+        }
+
+        function closePopoverOnOutsideClick(e) {
+            if (activePopover && !activePopover.contains(e.target)) {
+                closeAggregatePopover();
+            }
+        }
+
+        function closeAggregatePopover() {
+            if (activePopover) {
+                activePopover.remove();
+                activePopover = null;
+                selectedPopoverResource = null;
+                document.removeEventListener('click', closePopoverOnOutsideClick);
+
+                // Restore aggregate connections opacity
+                document.querySelectorAll('.aggregate-connection').forEach(c => {
+                    c.style.opacity = '';
+                });
+                // Remove any temporary highlight connections
+                document.querySelectorAll('.popover-highlight-conn').forEach(c => c.remove());
+            }
+        }
+
+        function selectResourceInPopover(resourceId, serviceType, itemEl) {
+            const group = AGGREGATION_CONFIG.groups[serviceType];
+            if (!group) return;
+            const groupIds = new Set(group.serviceIds);
+
+            // Toggle selection
+            if (selectedPopoverResource === resourceId) {
+                // Deselect
+                selectedPopoverResource = null;
+                itemEl.classList.remove('selected');
+                // Restore ALL aggregate connections
+                for (const conns of Object.values(aggregateConnections)) {
+                    conns.forEach(c => c.style.opacity = '');
+                }
+                document.querySelectorAll('.popover-highlight-conn').forEach(c => c.remove());
+                return;
+            }
+
+            // Clear previous selection
+            if (activePopover) {
+                activePopover.querySelectorAll('.aggregate-popover-item').forEach(i => i.classList.remove('selected'));
+            }
+            selectedPopoverResource = resourceId;
+            itemEl.classList.add('selected');
+
+            // Dim ALL aggregate connections (not just this group's)
+            for (const conns of Object.values(aggregateConnections)) {
+                conns.forEach(c => c.style.opacity = '0.15');
+            }
+
+            // Remove previous highlight connections
+            document.querySelectorAll('.popover-highlight-conn').forEach(c => c.remove());
+
+            // Find original connections for this specific resource and draw them from aggregate node
+            const aggNodeId = `__agg_${serviceType}`;
+            const aggPos = servicePositions[aggNodeId];
+            if (!aggPos) return;
+
+            const connLayer = document.getElementById('connections-layer');
+            const styles = {
+                'data_flow': { color: '#3B48CC', dash: '', marker: 'url(#arrowhead-data)' },
+                'trigger': { color: '#E7157B', dash: '', marker: 'url(#arrowhead-trigger)' },
+                'encrypt': { color: '#6c757d', dash: '4,4', marker: 'url(#arrowhead)' },
+                'network_flow': { color: '#0d7c3f', dash: '', marker: 'url(#arrowhead-network)' },
+                'security_rule': { color: '#d97706', dash: '2,4', marker: 'url(#arrowhead-security)' },
+                'default': { color: '#999999', dash: '', marker: 'url(#arrowhead)' },
+            };
+
+            // Build map of which IDs are in aggregated groups (for resolving targets)
+            const idToAggGroup = {};
+            for (const [stype, isAgg] of Object.entries(aggregationState)) {
+                if (!isAgg || stype === serviceType) continue;
+                const g = AGGREGATION_CONFIG.groups[stype];
+                if (!g) continue;
+                for (const sid of g.serviceIds) {
+                    idToAggGroup[sid] = stype;
+                }
+            }
+
+            // Collect and deduplicate highlight connections
+            const hlMerged = {};
+            for (const conn of originalConnections) {
+                let externalId = null;
+                let direction = null;
+
+                if (conn.sourceId === resourceId && !groupIds.has(conn.targetId)) {
+                    externalId = conn.targetId;
+                    direction = 'out';
+                } else if (conn.targetId === resourceId && !groupIds.has(conn.sourceId)) {
+                    externalId = conn.sourceId;
+                    direction = 'in';
+                }
+
+                if (!externalId) continue;
+
+                // Resolve external ID to aggregate node if the target is in another aggregated group
+                const resolvedId = idToAggGroup[externalId] ? `__agg_${idToAggGroup[externalId]}` : externalId;
+                const hlSource = direction === 'out' ? aggNodeId : resolvedId;
+                const hlTarget = direction === 'out' ? resolvedId : aggNodeId;
+                const key = `${hlSource}|${hlTarget}|${conn.connType || 'default'}`;
+
+                if (!hlMerged[key]) {
+                    hlMerged[key] = { source: hlSource, target: hlTarget, connType: conn.connType || 'default', count: 0 };
+                }
+                hlMerged[key].count++;
+            }
+
+            // Draw deduplicated highlight connections
+            for (const [key, info] of Object.entries(hlMerged)) {
+                const sourcePos = servicePositions[info.source];
+                const targetPos = servicePositions[info.target];
+                if (!sourcePos || !targetPos) continue;
+
+                const pathD = calcConnectionPath(sourcePos, targetPos);
+                const style = styles[info.connType] || styles['default'];
+                const strokeWidth = info.count > 4 ? 3.5 : info.count > 2 ? 2.5 : 2;
+
+                const connG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                connG.classList.add('connection', 'popover-highlight-conn');
+                connG.dataset.connType = info.connType;
+                if (connTypeFilterState[info.connType] === false) {
+                    connG.classList.add('conn-type-hidden');
+                }
+                connG.dataset.source = info.source;
+                connG.dataset.target = info.target;
+
+                const hitarea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitarea.classList.add('connection-hitarea');
+                hitarea.setAttribute('d', pathD);
+                hitarea.setAttribute('fill', 'none');
+                hitarea.setAttribute('stroke', 'transparent');
+                hitarea.setAttribute('stroke-width', '15');
+                connG.appendChild(hitarea);
+
+                const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pathEl.classList.add('connection-path');
+                pathEl.setAttribute('d', pathD);
+                pathEl.setAttribute('fill', 'none');
+                pathEl.setAttribute('stroke', style.color);
+                pathEl.setAttribute('stroke-width', `${strokeWidth}`);
+                if (style.dash) pathEl.setAttribute('stroke-dasharray', style.dash);
+                pathEl.setAttribute('marker-end', style.marker);
+                pathEl.setAttribute('opacity', '1');
+                connG.appendChild(pathEl);
+
+                if (info.count > 1) {
+                    const midX = (sourcePos.x + targetPos.x) / 2 + iconSize / 2;
+                    const midY = (sourcePos.y + targetPos.y) / 2 + iconSize / 2;
+                    const multLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    multLabel.classList.add('multiplicity-label');
+                    multLabel.setAttribute('x', `${midX + 8}`);
+                    multLabel.setAttribute('y', `${midY - 5}`);
+                    multLabel.setAttribute('font-family', 'Arial, sans-serif');
+                    multLabel.setAttribute('font-size', '10');
+                    multLabel.setAttribute('font-weight', 'bold');
+                    multLabel.setAttribute('fill', style.color);
+                    multLabel.textContent = `x${info.count}`;
+                    connG.appendChild(multLabel);
+                }
+
+                connLayer.appendChild(connG);
+            }
+        }
+
+        // ============ AGGREGATION-AWARE DRAG ============
+        // Override updateConnectionsFor to also handle aggregate connections
+        updateConnectionsFor = function(serviceId) {
+            // Update original connections
+            _baseUpdateConnectionsFor(serviceId);
+
+            // Update aggregate connections involving this serviceId
+            document.querySelectorAll(`.aggregate-connection[data-source="${serviceId}"], .aggregate-connection[data-target="${serviceId}"]`).forEach(conn => {
+                updateConnection(conn);
+            });
+
+            // Also update popover highlight connections
+            document.querySelectorAll(`.popover-highlight-conn`).forEach(conn => {
+                const sId = conn.dataset.source;
+                const tId = conn.dataset.target;
+                if (sId === serviceId || tId === serviceId) {
+                    const sPos = servicePositions[sId];
+                    const tPos = servicePositions[tId];
+                    if (sPos && tPos) {
+                        const pathD = calcConnectionPath(sPos, tPos);
+                        const pathEl = conn.querySelector('.connection-path');
+                        const hitEl = conn.querySelector('.connection-hitarea');
+                        if (pathEl) pathEl.setAttribute('d', pathD);
+                        if (hitEl) hitEl.setAttribute('d', pathD);
+                        // Update multiplicity label position
+                        const multLabel = conn.querySelector('.multiplicity-label');
+                        if (multLabel) {
+                            const midX = (sPos.x + tPos.x) / 2 + iconSize / 2;
+                            const midY = (sPos.y + tPos.y) / 2 + iconSize / 2;
+                            multLabel.setAttribute('x', `${midX + 8}`);
+                            multLabel.setAttribute('y', `${midY - 5}`);
+                        }
+                    }
+                }
+            });
+        };
+
+        // ============ PERSISTENCE INTEGRATION ============
+        // Override save/load/reset to include aggregation state
+
+        savePositions = function() {
+            // Save positions (including aggregate node positions)
+            const data = JSON.stringify(servicePositions);
+            localStorage.setItem('diagramPositions', data);
+            // Save aggregation state
+            localStorage.setItem('diagramAggregationState', JSON.stringify(aggregationState));
+            // Save connection type filter state
+            localStorage.setItem('diagramConnTypeFilter', JSON.stringify(connTypeFilterState));
+            alert('Layout and aggregation state saved!');
+        };
+
+        loadPositions = function() {
+            const data = localStorage.getItem('diagramPositions');
+            if (!data) {
+                alert('No saved layout found.');
+                return;
+            }
+
+            const saved = JSON.parse(data);
+            Object.keys(saved).forEach(id => {
+                if (servicePositions[id] !== undefined) {
+                    servicePositions[id] = saved[id];
+                    const el = document.querySelector(`[data-service-id="${id}"]`);
+                    if (el) {
+                        el.setAttribute('transform', `translate(${saved[id].x}, ${saved[id].y})`);
+                    }
+                }
+            });
+
+            // Load aggregation state
+            const aggData = localStorage.getItem('diagramAggregationState');
+            if (aggData) {
+                try {
+                    const savedAgg = JSON.parse(aggData);
+                    for (const [stype, isAgg] of Object.entries(savedAgg)) {
+                        if (aggregationState[stype] !== undefined && aggregationState[stype] !== isAgg) {
+                            toggleAggregation(stype);
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // Load connection type filter state
+            const ctData = localStorage.getItem('diagramConnTypeFilter');
+            if (ctData) {
+                try {
+                    const savedCt = JSON.parse(ctData);
+                    for (const ct of CONNECTION_TYPES) {
+                        if (savedCt[ct.id] !== undefined) {
+                            connTypeFilterState[ct.id] = savedCt[ct.id];
+                        }
+                    }
+                    renderConnFilterPanel();
+                    applyConnTypeFilter();
+                } catch(e) {}
+            }
+
+            updateAllConnections();
+            alert('Layout loaded!');
+        };
+
+        resetPositions = function() {
+            // Reset individual node positions
+            Object.keys(originalPositions).forEach(id => {
+                servicePositions[id] = { ...originalPositions[id] };
+                const el = document.querySelector(`[data-service-id="${id}"]`);
+                if (el) {
+                    el.setAttribute('transform', `translate(${originalPositions[id].x}, ${originalPositions[id].y})`);
+                }
+            });
+
+            // Reset aggregation to defaults
+            for (const [stype, group] of Object.entries(AGGREGATION_CONFIG.groups)) {
+                if (group.count >= AGGREGATION_CONFIG.threshold) {
+                    const shouldAgg = group.defaultAggregated;
+                    if (aggregationState[stype] !== shouldAgg) {
+                        aggregationState[stype] = shouldAgg;
+                        if (shouldAgg) {
+                            aggregateGroup(stype);
+                        } else {
+                            deaggregateGroup(stype);
+                        }
+                    } else if (shouldAgg && aggregateNodes[stype]) {
+                        // Recalculate centroid with reset positions
+                        const centroid = computeCentroid(stype);
+                        servicePositions[`__agg_${stype}`] = centroid;
+                        aggregateNodes[stype].setAttribute('transform', `translate(${centroid.x}, ${centroid.y})`);
+                    }
+                }
+            }
+
+            renderChipPanel();
+            updateAllConnections();
+            // Also update aggregate connections
+            for (const [stype, conns] of Object.entries(aggregateConnections)) {
+                conns.forEach(c => updateConnection(c));
+            }
+
+            localStorage.removeItem('diagramAggregationState');
+
+            // Reset connection type filter to all visible
+            for (const ct of CONNECTION_TYPES) {
+                connTypeFilterState[ct.id] = true;
+            }
+            renderConnFilterPanel();
+            applyConnTypeFilter();
+            localStorage.removeItem('diagramConnTypeFilter');
+        };
+    </script>
+</body>
+</html>

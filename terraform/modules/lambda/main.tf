@@ -77,11 +77,21 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
   })
 }
 
+# Dynamically generate a dummy zip file for the initial terraform apply.
+# The actual handler code should be deployed subsequently via a CI/CD pipeline.
+data "archive_file" "dummy" {
+  type        = "zip"
+  output_path = "${path.module}/dummy_lambda.zip"
+
+  source_content          = "exports.handler = async (event) => { return { statusCode: 200, body: 'Deployment successful' }; };"
+  source_content_filename = "index.js"
+}
+
 # Lambda function
 resource "aws_lambda_function" "api_handler" {
   # checkov:skip=CKV_AWS_272: ADD REASON
   architectures = ["arm64"]
-  filename      = "lambda_function.zip"
+  filename      = data.archive_file.dummy.output_path
   function_name = var.function_name
   handler       = var.handler
   runtime       = var.runtime
@@ -109,6 +119,14 @@ resource "aws_lambda_function" "api_handler" {
       subnet_ids         = var.subnet_ids
       security_group_ids = [aws_security_group.lambda_sg[0].id]
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      filename,
+      source_code_hash,
+      environment
+    ]
   }
 }
 
