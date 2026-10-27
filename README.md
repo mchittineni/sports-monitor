@@ -20,6 +20,11 @@
 [![Infrastructure: Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)](#)
 [![Security: Trivy](https://img.shields.io/badge/Security-Trivy-3D61E1?logo=trivy&logoColor=white)](#)
 [![Cost: Infracost](https://img.shields.io/badge/Cost-Infracost-00D1B2?logo=infracost&logoColor=white)](#)
+[![CI](https://github.com/mchittineni/sports-monitor/actions/workflows/test.yml/badge.svg)](https://github.com/mchittineni/sports-monitor/actions/workflows/test.yml)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mchittineni/sports-monitor/pulls)
+
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/mchittineni)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-24292F?style=for-the-badge&logo=githubsponsors&logoColor=EA4AAA)](https://github.com/sponsors/mchittineni)
 
 Welcome to **Sports Monitor**! A modern, highly available, and cloud-native web application that visualizes live sports activity worldwide in real-time through an interactive map interface.
 
